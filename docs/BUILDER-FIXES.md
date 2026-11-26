@@ -399,14 +399,14 @@ The full prompt was handed over in chat on 26 Nov.
 
 ---
 
-## ☐ 7. `handover-qa`: deterministic privacy guard (a code step before the search)
+## ☐ 7. `handover-qa`: an AI privacy check before the search
 
-The full prompt was handed over in chat on 26 Nov.
-- **What:** add a Custom code step `privacy_guard` first (START → `privacy_guard`).
-  - When the question is about a person's interview, panel, hiring, ratings, scores or feedback, it sets
-    `answer` = "That information is not available in this chat.", `trust` = "Blocked", `citations` = [] and
-    `blocked` = true.
-  - It then goes straight to `reply`; otherwise it goes to `search` as before.
-  - The prompt rule from fix 6 stays as a second layer.
-- **Why:** the model-only rule is not deterministic. The same question was Blocked in one run and "No answer" in the
-  next.
+The full prompt was handed over in chat on 26 Nov. It replaces an earlier keyword-based idea, which was rejected
+because the decision should come from real model understanding.
+- **What:** add a structured-output AI step `privacy_check` first (START → `privacy_check`). It decides, from the
+  question alone, whether it asks for a person's interview, hiring, rating, score, assessment or performance record.
+  - **Yes:** `refuse` (Set values: the refusal text, trust "Blocked", no citations) → `reply`.
+  - **No:** `search` as before.
+  - The `qa_answer` prompt rule stays as a second layer.
+- **Why:** with the rule only inside `qa_answer`, the model decides privacy while reading search results, and session
+  notes that mention the person sway it. The same question was Blocked in one run and "No answer" in the next.
