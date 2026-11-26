@@ -1,0 +1,32 @@
+# --- Never in git: this repo is PUBLIC -------------------------------------
+# Exported AgentMesh hosts carry private platform URLs in .env.example.
+# Recreate them with scripts/unpack-hosts.sh.
+agentmesh/hosts/
+# Downloaded kit: ZIPs, scaffolds, YAML, reports, manuals.
+inputs/
+# Secrets and local settings (an .env.example we write ourselves, without URLs, is allowed).
+.env
+.env.*
+!.env.example
+*.AzureVpnProfile*
+*.pem
+*.key
+
+# --- Python / host runtime -------------------------------------------------
+**/.venv/
+**/.local/
+__pycache__/
+*.pyc
+logs/
+
+# --- Web -------------------------------------------------------------------
+node_modules/
+dist/
+test-results/
+playwright-report/
+*.tsbuildinfo
+
+# --- OS / editors ----------------------------------------------------------
+.DS_Store
+.vscode/
+.idea/
