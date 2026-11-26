@@ -24,6 +24,15 @@ export const PRIYA_KT_NOTES = "Day 1 orientation: Anil Rao owns adjudication rul
 export const H1_SAMPLE_ANSWER =
   "The retry limit is three because three retries with backoff fit inside the 30-second consumer timeout agreed with StreamOps; five retries caused duplicate-processing alerts.";
 
+/** KT givers by id, as named in the AgentMesh givers table (names only: real addresses are typed per run). */
+export const GIVERS_BY_ID: { id: string; name: string }[] = [
+  { id: "ananya", name: "Murali" },
+  { id: "rahul", name: "Prakhar" },
+  { id: "sneha", name: "Auditee" },
+  { id: "karan", name: "Karan Shah" },
+  { id: "divya", name: "Divya Menon" },
+];
+
 export const ASK_SUGGESTIONS = [
   "Who approves a production release?",
   "Where do failed claim events go?",

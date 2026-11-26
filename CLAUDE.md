@@ -39,6 +39,11 @@ demo on 1 Dec 2026. The freeze is 30 Nov 2026.
 6. Synthetic data only (Northwind Insurance, Priya Sharma). Keep the user's work email out of commits; use a GitHub
    noreply address.
 7. Commit or push only when the user asks. Work on branch `agentmesh-ui`.
+8. **Real email addresses are never stored in AgentMesh or in this repo.** Not in the agent definition, its seed data
+   or its tables; not in docs, fixtures, tests or code. Demo data uses `@zensar.example`. Real addresses are typed in
+   the app per run (the joiner's email, and "KT giver contacts for this run"), travel only in that run's input and
+   state, and the app never persists them. The hook blocks `@zensar.com`; check `git grep -n "@zensar.com"` before
+   committing. `make forget-runs` clears local run history.
 
 ## Useful facts
 - Hosts need the **Zenspark VPN** with **Cisco Umbrella disabled**; Umbrella hijacks DNS, so Content Safety resolves

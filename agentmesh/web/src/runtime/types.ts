@@ -254,6 +254,8 @@ export interface OrchState {
   start_date?: string;
   round?: number;
   role_skills?: RoleSkill[];
+  /** Per-run real addresses by giver id (Builder prompt 5). Never saved by the app. */
+  contacts?: Record<string, string>;
   givers?: Giver[];
   gaps?: Gap[];
   gap_count?: number;

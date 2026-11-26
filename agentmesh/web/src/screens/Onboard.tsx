@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Download, Play, Upload } from "lucide-react";
 import { useStore } from "../state/store";
-import { CSV_COLUMNS, SAMPLE_JOINER } from "../runtime/samples";
+import { CSV_COLUMNS, GIVERS_BY_ID, SAMPLE_JOINER } from "../runtime/samples";
 import { Card, ErrorState, Field, Note, PageHead, Pill, Tabs } from "../components/ui";
 
 type Form = Record<string, string>;
@@ -48,13 +48,23 @@ export default function Onboard() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"one" | "bulk" | "hr">("one");
   const [f, setF] = useState<Form>(EMPTY);
+  // Real addresses for this run only: kept in memory, never written to browser storage or the repo.
+  const [contacts, setContacts] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<Form[]>([]);
   const [bulkDone, setBulkDone] = useState<string[]>([]);
   const set = (k: string) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
 
   const useSample = () => setF(Object.fromEntries(Object.keys(EMPTY).map((k) => [k, String(SAMPLE_JOINER[k] ?? EMPTY[k])])));
-  const toInput = (x: Form) => ({ ...x, mode: "run", round: 1, candidate_id: slug(x.name) || `joiner-${Date.now()}` });
+  const filled = Object.fromEntries(Object.entries(contacts).filter(([, v]) => v.trim()).map(([k, v]) => [k, v.trim()]));
+  const toInput = (x: Form, withContacts = true) => ({
+    ...x,
+    mode: "run",
+    round: 1,
+    candidate_id: slug(x.name) || `joiner-${Date.now()}`,
+    // Sent only when filled: the agent uses them in memory for this run (Builder prompt 5).
+    ...(withContacts && Object.keys(filled).length ? { contacts: filled } : {}),
+  });
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -74,7 +84,7 @@ export default function Onboard() {
   const importAll = async () => {
     setBulkDone([]);
     for (const r of rows) {
-      const res = await startJoiner(toInput(r));
+      const res = await startJoiner(toInput(r, false));
       setBulkDone((d) => [...d, `${r.name}: ${res.ok ? "started, paused for H2" : `failed: ${res.error}`}`]);
     }
   };
@@ -108,7 +118,7 @@ export default function Onboard() {
                 <Field label="Full name">
                   <input className="input" required value={f.name} onChange={set("name")} />
                 </Field>
-                <Field label="Work email" hint="Use a real mailbox: the agent emails the KT time proposals and invites here.">
+                <Field label="Work email" hint="Use a real mailbox to receive the KT proposals and invites. Used for this run only; the app doesn't save it.">
                   <input className="input" type="email" required value={f.email} onChange={set("email")} />
                 </Field>
                 <Field label="Role profile">
@@ -133,6 +143,21 @@ export default function Onboard() {
                   </Field>
                 </div>
               ))}
+              <details>
+                <summary className="small" style={{ cursor: "pointer", fontWeight: 600 }}>
+                  KT giver contacts for this run (optional)
+                </summary>
+                <div className="stack" style={{ marginTop: 10 }}>
+                  <p className="tiny muted">Real addresses go here, not into AgentMesh. They travel with this run only, so the agent can email the givers, and are never saved in the agent's tables or in this app. Leave blank to use the placeholders.</p>
+                  <div className="grid g2">
+                    {GIVERS_BY_ID.map((g) => (
+                      <Field key={g.id} label={g.name}>
+                        <input className="input" type="email" autoComplete="off" value={contacts[g.id] ?? ""} onChange={(e) => setContacts({ ...contacts, [g.id]: e.target.value })} placeholder="Their real Zensar email" />
+                      </Field>
+                    ))}
+                  </div>
+                </div>
+              </details>
               <div className="actions">
                 <button className="btn primary" type="submit" disabled={!ready || starting}>
                   <Play size={14} aria-hidden="true" /> {starting ? "Starting…" : "Save and start the agents"}

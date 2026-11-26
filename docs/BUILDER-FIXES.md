@@ -85,7 +85,12 @@ agentmesh/PHASE1.md.
 
 ---
 
-## ☐ 3. `handover-orchestrator`: team names in the demo data (lead Ricky, KT givers Prakhar and Murali)
+## ☑ 3. `handover-orchestrator`: team names in the demo data (lead Ricky, KT givers Prakhar and Murali)
+
+**Done in the Builder on 26 Nov (09:20-09:35 UTC), export `handover-orchestrator_v4.zip`.** The givers are now
+Murali (`ananya`), Prakhar (`rahul`) and Auditee (`sneha`), plus Karan Shah and Divya Menon. Ricky is the escalation
+contact. Verified locally: seed OK, and Priya's plan uses Murali, Prakhar and Auditee. Auditee's row briefly held a
+real address; prompt 5 removes it.
 
 The web app already uses these first names (lead **Ricky**, joiner **Auditee**, KT givers **Prakhar** and **Murali**).
 On the live agents, the KT-giver names come from the orchestrator's `givers` table, and the lead appears in two
@@ -357,3 +362,20 @@ The web app uses these exact names. Please keep them:
 
 **After the re-export:** follow the usual steps at the top of this file, then re-test the loop locally (it needs the
 approval key, because it runs after H3).
+
+---
+
+## ☐ 5. `handover-orchestrator`: no real addresses stored in AgentMesh; addresses come from the app per run
+
+**Apply this before prompt 4.** The full prompt was handed over in chat on 26 Nov. What it does:
+
+1. Replaces the real address on the `sneha` (Auditee) givers row with `auditee@zensar.example`. No `@zensar.com`
+   address may remain anywhere in the definition.
+2. Adds an optional run input `contacts` (giver id → real address) and a custom-code step `apply_contacts` between
+   `load_givers` and `search_project`. It overrides the givers' emails **in memory** for that run.
+3. Keeps addresses out of the saved rows: `save_plan` stores `plan_table` and `save_sessions` stores `sessions_table`
+   (names only), instead of the plan and sessions objects, which carry emails.
+4. Re-runs the seed, so the stored givers row is overwritten with the placeholder. Then a Priya Test with
+   `"contacts": {"sneha": "<own address>"}` up to `review_plan`, and a re-export.
+
+The web app already sends `contacts` from **Onboard joiners → KT giver contacts for this run**, only when filled.

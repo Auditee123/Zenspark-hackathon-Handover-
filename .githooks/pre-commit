@@ -10,6 +10,8 @@ report() { echo "pre-commit: BLOCKED - $1" >&2; fail=1; }
 SECRET_RE='(AZURE_CLIENT_SECRET|AZURE_DEVOPS_PAT|ACTION_APPROVAL_SIM_SECRET|ACTION_APPROVAL_SECRET|HITL_APPROVAL_SECRET|POSTGRES_PASSWORD|REDIS_ACCESS_KEY|APPLICATIONINSIGHTS_CONNECTION_STRING)[[:space:]]*[:=][[:space:]]*["'"'"']?[^][:space:]"'"'"'#)$<{\\]'
 # Browser-exposed variables must never hold keys.
 VITE_RE='VITE_[A-Z0-9_]*(KEY|SECRET|TOKEN|PAT|PASSWORD)[A-Z0-9_]*[[:space:]]*[:=][[:space:]]*["'"'"']?[^[:space:]"'"'"'#]'
+# Real Zensar mailboxes (the repo only uses @zensar.example and GitHub noreply addresses).
+MAIL_RE='[A-Za-z0-9._%+-]+@zensar\.com'
 # Private platform endpoints and credentialed feed URLs.
 HOST_RE='azurecontainerapps\.io|jollystone-|kindbeach-|corp\.internal|cognitiveservices\.azure\.com|https://[^/@[:space:]]+:[^@[:space:]]+@pkgs\.dev\.azure\.com'
 
@@ -31,6 +33,9 @@ while IFS= read -r -d '' path; do
   fi
   if printf '%s' "$content" | grep -En "$VITE_RE" > /dev/null; then
     report "$path puts a key/secret/token in a VITE_ variable"
+  fi
+  if printf '%s' "$content" | grep -Ein "$MAIL_RE" > /dev/null; then
+    report "$path contains a real @zensar.com email address (line $(printf '%s' "$content" | grep -Ein "$MAIL_RE" | head -1 | cut -d: -f1))"
   fi
   if printf '%s' "$content" | grep -Ein "$HOST_RE" > /dev/null; then
     report "$path contains a private AgentMesh endpoint (line $(printf '%s' "$content" | grep -Ein "$HOST_RE" | head -1 | cut -d: -f1))"

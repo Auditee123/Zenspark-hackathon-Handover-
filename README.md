@@ -16,7 +16,71 @@ A React front end in `agentmesh/web/` (Phase 2, from the AgentMesh Serve scaffol
 The jury demo runs on localhost on **1 Dec 2026**; the freeze is **30 Nov**. All data is synthetic
 (Northwind Insurance, Priya Sharma).
 
-**Where the work stands and what's next:** see [Status](#status) below and [docs/PLAN.md](docs/PLAN.md).
+**Start here:** [Kickstart](#kickstart-the-daily-commands) for the daily commands and checks. **Where the work
+stands:** [Status](#status) below and [docs/PLAN.md](docs/PLAN.md).
+
+---
+
+## Kickstart: the daily commands
+
+Everything below assumes the one-time setup in section 1 is done (tools, `.env` values, `make setup`).
+
+**1. Network first, every time.**
+- Open Azure VPN Client and connect **Zenspark** (sign in with your Zensar account).
+- **Quit or disable Cisco Umbrella.** It hijacks DNS, and every agent run then fails with
+  `input_governance_blocked`.
+
+**2. Check, start, open.**
+
+```bash
+make doctor   # tools, host ZIPs, .env values (never printed), VPN + AgentMesh reachable, which hosts run
+make demo     # starts the 3 agent hosts, waits until all are healthy, then the UI
+              # → open http://localhost:5180   (Ctrl-C stops the UI; the hosts keep running)
+```
+
+Or step by step:
+
+```bash
+make hosts    # start the 3 agent hosts in the background (first start installs packages: several minutes)
+make health   # wait until 8001, 8002 and 8003 all say "healthy"
+make web      # UI on live AgentMesh: http://localhost:5180
+make logs     # (optional) follow the host logs
+```
+
+Without VPN or hosts, for UI work: `make mock` → http://localhost:5181 (labelled MOCK DATA).
+
+**3. Checks: what "healthy" looks like.**
+
+| Check | How | Healthy |
+|---|---|---|
+| Network | `make doctor` | "AgentMesh platform reachable (VPN is up)", and no FIX lines |
+| Hosts | `make health` | Three lines with `"status":"healthy"`. 8001 reports `w7d41b85-handover-orchestrator` |
+| Agents really answer | Open the UI → Ask Handover → "Who approves a production release?" | Fatima Khan, trust "Project documents" (about 20 s) |
+| UI connected | http://localhost:5180 | No red banner at the top; the Command centre lists the runs |
+| Code | `make check` and `cd agentmesh/web && npm run e2e` | Clean, and "3 passed" |
+
+**4. Stop.** `Ctrl-C` stops the UI; `make stop` stops the three hosts.
+
+**After a Builder re-export** (Deploy → Download ZIP in `ZE_000046_Handover`):
+
+```bash
+cp ~/Downloads/<new zip> inputs/zips/handover-orchestrator.zip   # or -qa / -kt-session
+make hosts-unpack && make stop && make hosts
+(cd agentmesh/web && npm run gen:nodes)    # only when nodes changed
+```
+
+## Real email addresses (security)
+
+- **Real addresses are never stored in AgentMesh** (not in the agent definition, not in its tables) **and never in
+  this repo.** The pre-commit hook blocks any `@zensar.com` address. Demo data uses `@zensar.example`.
+- **They are typed in the app, per run.** In *Onboard joiners*, use the joiner's real **Work email**. To email the KT
+  givers too, open **KT giver contacts for this run**. Those addresses travel with that run only. The agent uses them
+  in memory to send that run's emails, and the app never saves them (nothing goes to browser storage).
+  - The per-run contacts need Builder prompt 5 (`apply_contacts`, and no addresses in the saved rows).
+- **Where a run's addresses still exist:**
+  - in that run's state on this laptop (`agentmesh/hosts/handover-orchestrator/.local/`, gitignored);
+  - with the platform's email service, which has to know the recipient to send.
+- `make forget-runs` deletes the orchestrator's local run history.
 
 ---
 
@@ -207,7 +271,7 @@ cd agentmesh/web && npm run e2e   # Playwright: full journey in mock mode
 .githooks/pre-commit     blocks secrets and private hostnames (enable with make setup)
 scripts/unpack-hosts.sh  recreates agentmesh/hosts/* from inputs/zips (keeps .env, .venv, .local)
 scripts/doctor.sh        readiness check (make doctor)
-Makefile                 setup, doctor, hosts-unpack, hosts, stop, health, logs
+Makefile                 setup, doctor, demo, hosts, health, web, mock, check, stop, logs, forget-runs, ...
 docs/PLAN.md             plan, milestones, checklist: where to pick up
 CLAUDE.md                instructions for Claude Code sessions
 agentmesh/API.md         confirmed host runtime contract
@@ -254,9 +318,17 @@ contract in [agentmesh/API.md](agentmesh/API.md).
   - Ask (live qa), Agent runs, generic pause form.
 - [x] Playwright journey test (mock mode): 3/3 pass
 - [ ] Live journey past H3, once the approval key arrives
+- [x] Scheduler: real-invite and reschedule loop in the UI and mock mode (live needs Builder prompt 4)
+- [x] Per-run real contacts in onboarding (live needs Builder prompt 5)
 - [ ] M5: record a full live run, replay mode, `make demo` rehearsal
 
 **Open issues and decisions**
+
+- **Builder prompts to apply** (in `ZE_000046_Handover`, then re-export the orchestrator):
+  - **prompt 5 first:** remove the real address from the seed data and re-seed; per-run `contacts`; no addresses
+    in the saved rows;
+  - **then prompt 4:** emailed invites and the reschedule loop.
+  - Prompt 3 (team names) is done (v4 export).
 
 - **Publish isn't available in the Builder yet.** The team lead is checking with the organisers. The host ZIPs
   (26 Nov, 11:03-11:05 IST) match the latest agent YAML.

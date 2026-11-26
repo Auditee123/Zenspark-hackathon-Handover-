@@ -49,7 +49,7 @@ const roleSkills = (role: string): (RoleSkill & { docs: string })[] =>
 const GIVERS: (Giver & { slot_a: string; slot_b: string })[] = [
   { giver_id: "ananya", name: "Murali", email: "murali@zensar.example", skills: "claims;ways", slot_a: "10:00", slot_b: "15:00" },
   { giver_id: "rahul", name: "Prakhar", email: "prakhar@zensar.example", skills: "kafka;spring;pg", slot_a: "10:00", slot_b: "14:00" },
-  { giver_id: "sneha", name: "Sneha Iyer", email: "sneha.iyer@zensar.example", skills: "cicd;ways", slot_a: "11:00", slot_b: "15:00" },
+  { giver_id: "sneha", name: "Auditee", email: "auditee@zensar.example", skills: "cicd;ways", slot_a: "11:00", slot_b: "15:00" },
   { giver_id: "karan", name: "Karan Shah", email: "karan.shah@zensar.example", skills: "obs;pg;spring", slot_a: "10:00", slot_b: "16:00" },
   { giver_id: "divya", name: "Divya Menon", email: "divya.menon@zensar.example", skills: "pw;api;tdata;triage", slot_a: "11:00", slot_b: "14:00" },
 ];
@@ -125,8 +125,9 @@ function scoreGaps(s: OrchState): Partial<OrchState> {
 function draftPlan(s: OrchState): Partial<OrchState> {
   const rnd = s.round ?? 1;
   const load: Record<string, number> = {};
+  const all = (s.givers?.length ? s.givers : GIVERS) as Giver[];
   const pick = (sid: string) => {
-    const pool = (GIVERS.filter((g) => (g.skills ?? "").split(";").includes(sid)).length ? GIVERS.filter((g) => (g.skills ?? "").split(";").includes(sid)) : GIVERS)
+    const pool = (all.filter((g) => (g.skills ?? "").split(";").includes(sid)).length ? all.filter((g) => (g.skills ?? "").split(";").includes(sid)) : all)
       .slice()
       .sort((a, b) => (load[a.giver_id] ?? 0) - (load[b.giver_id] ?? 0));
     const g = pool[0];
@@ -408,7 +409,7 @@ const SPEED = 0.33; // the mock waits a third of the "recorded" duration so the 
 
 const SEG = {
   toH2: ["__input_governance__", "route_mode", "check_input", "mask_resume", "mask_l1", "mask_l2", "mask_l3", "store_docs", "load_role_skills", "load_config", "extract_evidence", "score_gaps", "explain_gaps", "save_gaps"],
-  toReview: ["after_h2", "load_givers", "search_project", "draft_plan"],
+  toReview: ["after_h2", "load_givers", "apply_contacts", "search_project", "draft_plan"],
   toSlots: ["save_plan", "load_calendar", "pick_slots", "invite_email", "send_proposals"],
   toKtDone: ["book_sessions", "write_invites", "save_sessions", "send_invites"],
   reschedule: ["repropose_slot", "send_reproposal"],
@@ -504,6 +505,11 @@ class MockBackend {
         return set({ role_skills: roleSkills(String(s.role_id ?? "java")) });
       case "load_givers":
         return set({ givers: GIVERS });
+      case "apply_contacts": {
+        // Per-run contacts (Builder prompt 5): override givers' emails in memory only.
+        const c = (s.contacts ?? {}) as Record<string, string>;
+        return set({ givers: (s.givers ?? []).map((g) => ({ ...g, email: c[g.giver_id] || c[g.name] || g.email })) });
+      }
       case "store_docs":
         return set(Object.fromEntries(["stored_resume", "stored_l1", "stored_l2", "stored_l3"].map((k) => [k, { status: "indexed", collection: `handover-${k.replace("stored_", "")}`, scope: "agent" }])));
       case "score_gaps":
