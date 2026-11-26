@@ -59,7 +59,8 @@ const NAV: Record<Role, { group: string; items: NavItem[] }[]> = {
       items: [
         { to: "/giver", n: "⌂", label: "My KT requests", sub: "Sessions and approvals" },
         { to: "/review", n: "1", label: "KT plan", sub: "Expert sign-off · H3" },
-        { to: "/session", n: "2", label: "Sessions", sub: "Run and approve notes" },
+        { to: "/schedule", n: "2", label: "My schedule", sub: "Sessions and changes" },
+        { to: "/session", n: "3", label: "Sessions", sub: "Run and approve notes" },
         { to: "/ask", n: "?", label: "Ask Handover", sub: "Cited Q&A" },
       ],
     },
@@ -141,7 +142,7 @@ export function TopBar() {
     setViewAs(r);
     toast(r === "lead" ? `Viewing as ${PEOPLE.lead.name}, the transition lead` : r === "giver" ? `Viewing as ${PEOPLE.giver.name}, a KT giver` : `Viewing as ${selected ? nameOf(selected) : "the joiner"}, the new joiner`);
     if (r === "joiner" && !["/me", "/review", "/schedule", "/session", "/assessment", "/ask"].includes(loc.pathname)) navigate("/me");
-    if (r === "giver" && !["/giver", "/review", "/session", "/ask"].includes(loc.pathname)) navigate("/giver");
+    if (r === "giver" && !["/giver", "/review", "/schedule", "/session", "/ask"].includes(loc.pathname)) navigate("/giver");
     if (r === "lead" && ["/me", "/giver"].includes(loc.pathname)) navigate("/");
   };
   return (

@@ -108,7 +108,7 @@ export default function Onboard() {
                 <Field label="Full name">
                   <input className="input" required value={f.name} onChange={set("name")} />
                 </Field>
-                <Field label="Work email">
+                <Field label="Work email" hint="Use a real mailbox: the agent emails the KT time proposals and invites here.">
                   <input className="input" type="email" required value={f.email} onChange={set("email")} />
                 </Field>
                 <Field label="Role profile">

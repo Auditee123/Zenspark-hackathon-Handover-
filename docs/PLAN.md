@@ -101,6 +101,18 @@ ESLint. Keep `PROTOCOL.md`, `route-config.json`, `auth.tsx` (MSAL, dev bypass) a
 If the orchestrator stays blocked on tables or writes, build M3–M4 against labelled mock fixtures, and switch to
 live once unblocked. Replay needs at least one real recorded run before the freeze.
 
+### Live scheduling (agreed 26 Nov)
+- [x] Builder prompt 4 written: real invites (Notification Router email to the joiner and each KT giver) and a
+      reschedule loop (`kt_done` change request → `repropose_slot` → `confirm_reschedule` → re-book → re-invite)
+- [x] Web app: scheduler with "Can't make it", a new-time picker, per-session status, "Messages from the agent",
+      change history, KT-giver "My schedule"; mock mode runs the same loop; e2e covers it
+- [ ] Builder: apply prompt 4 (and prompt 3 with real KT-giver emails), Test with a real Zensar inbox, re-export
+- [ ] Confirm that AgentMesh email really delivers to real inboxes (Builder Test with your own email as the joiner's)
+- [ ] Live re-test locally (needs the approval key: it all runs after H3)
+- Out of scope for 1 Dec: reading Outlook free/busy (needs tenant-admin Graph consent) and a bot that joins the Teams
+  call (needs a registered Teams bot, Graph calling permissions and real-time media). Instead, during the Teams call
+  the session room shows the live kt-session agent (screen-shared), and a Teams transcript can be pasted in.
+
 ## Open questions (team lead and mentor)
 - **Master copy:** the team workspace `ZE_000046_Handover` (since 26 Nov). Its Test runs run as `w7d41b85-<agent>`.
   Edit only there, then re-export. Never edit the My workspace copies.

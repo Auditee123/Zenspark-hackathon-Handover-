@@ -137,8 +137,17 @@ export function PlanDayCard({ d, kind = "", note, gapSkills, skillName }: { d: P
   );
 }
 
-/** Week calendar (Mon-Fri, 9:00-16:00). Events: booked (accent) or pending (amber). */
-export function Calendar({ events }: { events: { date: string; start: string; label: string; sub: string; pending?: boolean }[] }) {
+export interface CalEvent {
+  date: string;
+  start: string;
+  label: string;
+  sub: string;
+  pending?: boolean;
+  moved?: boolean;
+}
+
+/** Week calendar (Mon-Fri, 9:00-16:00). Events: booked (accent), pending (amber) or moved (teal). */
+export function Calendar({ events }: { events: CalEvent[] }) {
   if (events.length === 0) return <p className="small muted">No sessions to show yet.</p>;
   const first = new Date(`${[...events].sort((a, b) => a.date.localeCompare(b.date))[0].date}T00:00:00Z`);
   const monday = new Date(first.getTime() - ((first.getUTCDay() + 6) % 7) * 86_400_000);
@@ -161,7 +170,7 @@ export function Calendar({ events }: { events: { date: string; start: string; la
               return (
                 <div key={d} className="c">
                   {ev.map((e) => (
-                    <div key={e.label} className={`ev${e.pending ? " pend" : ""}`} title={`${e.label} · ${e.sub}`}>
+                    <div key={e.label} className={`ev${e.pending ? " pend" : e.moved ? " grp" : ""}`} title={`${e.label} · ${e.sub}`}>
                       <b>{e.label}</b>
                       <br />
                       {e.sub}
@@ -177,7 +186,7 @@ export function Calendar({ events }: { events: { date: string; start: string; la
   );
 }
 
-export const sessionEvents = (sessions: Session[]) => sessions.map((s) => ({ date: s.date, start: s.start, label: `Day ${s.day} · ${s.giver_name.split(" ")[0]}`, sub: `${s.start}–${s.end}` }));
+export const sessionEvents = (sessions: Session[]): CalEvent[] => sessions.map((s) => ({ date: s.date, start: s.start, label: `Day ${s.day} · ${s.giver_name.split(" ")[0]}`, sub: `${s.start}–${s.end}`, moved: s.status === "rescheduled" }));
 
 export function Bubble({ who, by, children, cites, extra }: { who: "me" | "agent" | "giver" | "sys" | "ai"; by?: string; children: ReactNode; cites?: string[]; extra?: ReactNode }) {
   return (

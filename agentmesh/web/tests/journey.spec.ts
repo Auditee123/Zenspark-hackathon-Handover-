@@ -45,7 +45,21 @@ test("one joiner, start to readiness", async ({ page }) => {
   await viewAs(page, "Joiner");
   await nav(page, /My schedule/);
   await page.getByRole("button", { name: /Confirm these times/ }).click();
-  await expect(page.getByText(/Booked · /).first()).toBeVisible();
+  await expect(page.getByText("Booked", { exact: true }).first()).toBeVisible();
+
+  // Reschedule loop: the KT giver can't make day 2; the agent re-proposes; the joiner picks B; everyone is re-invited
+  await viewAs(page, "KT giver");
+  await nav(page, /^My schedule/);
+  await page.getByRole("button", { name: /Can't make it/ }).nth(1).click();
+  await page.getByLabel("Reason (optional, shared with the joiner)").fill("Clashes with a release call");
+  await page.getByRole("button", { name: "Ask the agent for new times" }).click();
+  await viewAs(page, "Joiner");
+  await nav(page, /My schedule/);
+  await expect(page.getByRole("heading", { name: "Day 2: pick a new time" })).toBeVisible();
+  await page.getByRole("radio", { name: /^B · / }).click();
+  await page.getByRole("button", { name: "Confirm the new time" }).click();
+  await expect(page.getByText("Rescheduled", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(/Day 2.*moved from/)).toBeVisible();
 
   // kt_done: notes pasted by the KT giver
   await viewAs(page, "KT giver");

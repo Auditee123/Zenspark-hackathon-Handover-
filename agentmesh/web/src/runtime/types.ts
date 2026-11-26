@@ -194,7 +194,34 @@ export interface Session {
   end: string;
   title: string;
   giver_name: string;
+  giver_email?: string;
   status: string;
+  uid?: string;
+  sequence?: number;
+}
+export interface SlotChoice {
+  code: string;
+  date: string;
+  start: string;
+  end: string;
+}
+/** repropose_slot output (Builder fix 4). */
+export interface Reproposal {
+  day?: number;
+  title?: string;
+  giver_name?: string;
+  current?: { date?: string; start?: string; end?: string };
+  requested_by?: string;
+  reason?: string;
+  options?: SlotChoice[];
+}
+export interface ScheduleChange {
+  day: number;
+  title?: string;
+  from: string;
+  to: string;
+  requested_by?: string;
+  reason?: string;
 }
 export interface Question {
   qid: string;
@@ -247,6 +274,16 @@ export interface OrchState {
   sessions_table?: string;
   sessions_booked?: number;
   ics_text?: string;
+  invite_html?: string;
+  proposal_delivery?: Record<string, unknown> | null;
+  invites_delivery?: unknown;
+  reproposal_delivery?: Record<string, unknown> | null;
+  invitees?: { name?: string; email?: string }[];
+  reproposal?: Reproposal;
+  reproposal_text?: string;
+  reschedule_answer?: { choice?: string };
+  schedule_changes?: ScheduleChange[];
+  kt_done?: { sessions_completed?: boolean; session_notes?: string; reschedule_day?: number; requested_by?: string; reschedule_reason?: string };
   key_points?: string[];
   open_questions?: string[];
   questions?: Question[];

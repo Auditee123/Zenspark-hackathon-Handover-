@@ -36,6 +36,7 @@ export const PAUSES: Record<string, PauseInfo> = {
   h3_plan_approval: { route: "/review", role: "lead", tag: "H3", stage: "plan", text: (n, r) => `Approve KT plan v${r.state.plan_version ?? 1} for ${n} (2 approvers)` },
   confirm_slots: { route: "/schedule", role: "joiner", tag: "Confirm", stage: "sched", text: (n) => `${n} picks KT session times` },
   kt_done: { route: "/session", role: "giver", tag: "KT", stage: "kt", text: (n) => `Run KT sessions with ${n} and save the notes` },
+  confirm_reschedule: { route: "/schedule", role: "joiner", tag: "New time", stage: "kt", text: (n, r) => `${n} picks a new time for KT day ${r.state.reproposal?.day ?? "?"}` },
   h1_expert_answers: { route: "/session", role: "giver", tag: "H1", stage: "kt", text: (n) => `Notes from ${n}'s KT need the KT giver's approval` },
   take_assessment: { route: "/assessment", role: "joiner", tag: "Test", stage: "assess", text: (n) => `${n} takes the readiness assessment` },
   h4_signoff: { route: "/readiness", role: "lead", tag: "H4", stage: "assess", text: (n) => `Readiness decision for ${n}` },

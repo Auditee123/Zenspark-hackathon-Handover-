@@ -267,10 +267,76 @@ function bookSessions(s: OrchState): Partial<OrchState> {
   const sessions: Session[] = (s.proposals ?? []).map((p) => {
     const o = p.options.find((x) => picks.has(x.code.toUpperCase())) ?? p.options[0];
     ics.push("BEGIN:VEVENT", `UID:mock-${s.candidate_id}-${p.day}`, `DTSTART;TZID=Asia/Kolkata:${stamp(p.date, o.start)}`, `DTEND;TZID=Asia/Kolkata:${stamp(p.date, o.end)}`, `SUMMARY:KT Day ${p.day}: ${p.title}`, "END:VEVENT");
-    return { day: p.day, date: p.date, start: o.start, end: o.end, title: p.title, giver_name: p.giver_name, status: "booked" };
+    return { day: p.day, date: p.date, start: o.start, end: o.end, title: p.title, giver_name: p.giver_name, giver_email: p.giver_email, status: "booked", uid: `mock-${s.candidate_id}-${p.day}`, sequence: 0 };
   });
   ics.push("END:VCALENDAR");
-  return { sessions, sessions_booked: sessions.length, ics_text: ics.join("\r\n") };
+  return { sessions, sessions_booked: sessions.length, ics_text: ics.join("\r\n"), invitees: invitees(s, sessions) };
+}
+
+/** The joiner plus each distinct KT giver (book_sessions / apply_reschedule, Builder fix 4). */
+function invitees(s: OrchState, sessions: Session[]) {
+  const seen = new Set<string>();
+  const out: { name?: string; email?: string }[] = [];
+  for (const [name, email] of [[s.name, s.email] as const, ...sessions.map((x) => [x.giver_name, x.giver_email] as const)]) {
+    if (email && !seen.has(String(email))) {
+      seen.add(String(email));
+      out.push({ name: String(name ?? ""), email: String(email) });
+    }
+  }
+  return out;
+}
+
+const toMin = (t: string) => {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+};
+
+/** Port of repropose_slot (Builder fix 4): two new options for the requested day, same date first, then the next weekday. */
+function reproposeSlot(s: OrchState): Partial<OrchState> {
+  const req = (s.kt_done ?? {}) as Record<string, unknown>;
+  const day = Number(req.reschedule_day ?? 0);
+  const sessions = s.sessions ?? [];
+  const cur = sessions.find((x) => x.day === day);
+  if (!cur) return { reproposal: {}, reproposal_text: `There is no session on day ${day}, so nothing was moved.` };
+  const len = Math.max(15, toMin(cur.end) - toMin(cur.start));
+  const g = GIVERS.find((x) => x.name === cur.giver_name);
+  const options: { code: string; date: string; start: string; end: string }[] = [];
+  let d = new Date(`${cur.date}T00:00:00Z`);
+  for (let k = 0; k < 2 && options.length < 2; k++) {
+    if (k === 1) d = nextWeekday(new Date(d.getTime() + 86_400_000));
+    const iso = d.toISOString().slice(0, 10);
+    const busy = new Set(CALENDAR.filter((c) => c.giver_id === g?.giver_id && c.date === iso).map((c) => c.start));
+    const taken = new Set(sessions.filter((x) => x.date === iso).map((x) => x.start));
+    for (const t of [g?.slot_a, g?.slot_b, "11:00", "16:00", "14:00", "10:00"]) {
+      if (!t || busy.has(t) || taken.has(t) || options.some((o) => o.date === iso && o.start === t)) continue;
+      options.push({ code: "AB"[options.length], date: iso, start: t, end: addMin(t, len) });
+      if (options.length === 2) break;
+    }
+  }
+  const who = String(req.requested_by || "someone");
+  const why = String(req.reschedule_reason || "");
+  return {
+    reproposal: { day, title: cur.title, giver_name: cur.giver_name, current: { date: cur.date, start: cur.start, end: cur.end }, requested_by: who, reason: why, options },
+    reproposal_text: `Day ${day}, ${cur.title} with ${cur.giver_name}: ${who} asked to move it from ${cur.date} ${cur.start}${why ? ` (${why})` : ""}. New options: ${options.map((o) => `${o.code} = ${o.date} ${o.start} to ${o.end}`).join(", ") || "none found"}.`,
+  };
+}
+
+/** Port of apply_reschedule (Builder fix 4). */
+function applyReschedule(s: OrchState): Partial<OrchState> {
+  const rp = s.reproposal ?? {};
+  const choice = String((s.reschedule_answer as Record<string, unknown> | undefined)?.choice ?? "A").trim().toUpperCase().slice(0, 1);
+  const opt = rp.options?.find((o) => o.code === choice) ?? rp.options?.[0];
+  const changes = [...(s.schedule_changes ?? [])];
+  const sessions = (s.sessions ?? []).map((x) => {
+    if (!opt || x.day !== rp.day) return x;
+    changes.push({ day: x.day, title: x.title, from: `${x.date} ${x.start}`, to: `${opt.date} ${opt.start}`, requested_by: rp.requested_by, reason: rp.reason });
+    return { ...x, date: opt.date, start: opt.start, end: opt.end, status: "rescheduled", sequence: (x.sequence ?? 0) + 1 };
+  });
+  const stamp = (day: string, t: string) => `${day.replace(/-/g, "")}T${t.replace(":", "")}00`;
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Zensar Handover//KT//EN", "METHOD:REQUEST"];
+  for (const x of sessions) ics.push("BEGIN:VEVENT", `UID:${x.uid ?? ""}`, `SEQUENCE:${x.sequence ?? 0}`, `DTSTART;TZID=Asia/Kolkata:${stamp(x.date, x.start)}`, `DTEND;TZID=Asia/Kolkata:${stamp(x.date, x.end)}`, `SUMMARY:KT Day ${x.day}: ${x.title}`, "END:VEVENT");
+  ics.push("END:VCALENDAR");
+  return { sessions, schedule_changes: changes, ics_text: ics.join("\r\n"), invitees: invitees(s, sessions) };
 }
 
 const BANK: Record<string, [string, string[]][]> = {
@@ -344,7 +410,9 @@ const SEG = {
   toH2: ["__input_governance__", "route_mode", "check_input", "mask_resume", "mask_l1", "mask_l2", "mask_l3", "store_docs", "load_role_skills", "load_config", "extract_evidence", "score_gaps", "explain_gaps", "save_gaps"],
   toReview: ["after_h2", "load_givers", "search_project", "draft_plan"],
   toSlots: ["save_plan", "load_calendar", "pick_slots", "invite_email", "send_proposals"],
-  toKtDone: ["book_sessions", "write_invites", "save_sessions"],
+  toKtDone: ["book_sessions", "write_invites", "save_sessions", "send_invites"],
+  reschedule: ["repropose_slot", "send_reproposal"],
+  rebook: ["apply_reschedule", "write_invites", "save_sessions", "send_invites"],
   toH1: ["store_notes", "fetch_notes", "summarise_notes"],
   toTest: ["store_expert_answers", "gen_questions"],
   grade: ["grade_mcq", "score_assessment", "save_assessment"],
@@ -371,7 +439,8 @@ interface MockRun {
 const ASK_SCHEMAS: Record<string, InputSchema> = {
   review_plan: { type: "object", required: [], properties: { approve: { type: "boolean", title: "Approve this plan" }, move_skill_id: { type: "string", title: "Skill id" }, to_day: { type: "integer", title: "To day" }, giver_id: { type: "string", title: "Giver id" }, max_sessions: { type: "integer", title: "Max sessions" }, change_request: { type: "string", title: "Change request" } } },
   confirm_slots: { type: "object", required: ["slot_choices"], properties: { slot_choices: { type: "string", title: "Slot choices (e.g. 1A,2B,3A)" } } },
-  kt_done: { type: "object", required: ["sessions_completed"], properties: { session_notes: { type: "string", title: "Session notes or transcript" }, sessions_completed: { type: "boolean", title: "Sessions completed" } } },
+  kt_done: { type: "object", required: [], properties: { session_notes: { type: "string", title: "Session notes or transcript" }, sessions_completed: { type: "boolean", title: "Sessions completed" }, reschedule_day: { type: "integer", title: "Move the session on day" }, requested_by: { type: "string", title: "Who asked" }, reschedule_reason: { type: "string", title: "Reason" } } },
+  confirm_reschedule: { type: "object", required: ["choice"], properties: { choice: { type: "string", title: "New time (A or B)" } } },
   h1_expert_answers: { type: "object", required: ["answers", "approve_notes"], properties: { answers: { type: "string", title: "Answers to the open questions" }, approve_notes: { type: "boolean", title: "Approve the notes" } } },
   take_assessment: { type: "object", required: [], properties: Object.fromEntries([1, 2, 3, 4, 5].map((i) => [`a${i}`, { type: "string", title: `Answer ${i}`, description: "A, B, C or D" }])) },
 };
@@ -462,6 +531,17 @@ class MockBackend {
         return set(pickSlots(s));
       case "book_sessions":
         return set(bookSessions(s));
+      // Email steps: mock mode never sends anything; the record says so.
+      case "send_proposals":
+        return set({ proposal_delivery: { status: "mock: not sent", channel: "email", recipient: s.email } });
+      case "send_invites":
+        return set({ invites_delivery: (s.invitees ?? []).map((i) => ({ status: "mock: not sent", channel: "email", recipient: i.email })) });
+      case "send_reproposal":
+        return set({ reproposal_delivery: { status: "mock: not sent", channel: "email", recipient: s.email } });
+      case "repropose_slot":
+        return set(reproposeSlot(s));
+      case "apply_reschedule":
+        return set(applyReschedule(s));
       case "write_invites":
         return set({ ics_file: this.file(run, `handover-${s.candidate_id}-kt.ics.txt`, String(s.ics_text ?? ""), "text/plain") });
       case "summarise_notes": {
@@ -561,7 +641,8 @@ class MockBackend {
       review_plan: `KT plan v${s.plan_version} for ${s.name}: ${s.plan_days} sessions. ${s.change_summary ?? ""}`,
       h3_plan_approval: `H3: approve KT plan v${s.plan_version} for ${s.name}. Two approvals are needed: the transition lead and the lead KT giver.`,
       confirm_slots: `${s.name}, pick one option per session (for example 1A,2B,3A).`,
-      kt_done: `KT sessions booked for ${s.name}. When the sessions are done, confirm here.`,
+      kt_done: `KT sessions booked for ${s.name}. When the sessions are done, confirm here. To move a session, enter its day number, who asked and why, and leave Sessions completed unticked.`,
+      confirm_reschedule: `${s.name}, ${s.reproposal_text ?? ""} Pick A or B.`,
       h1_expert_answers: `H1: KT giver, please check the notes from ${s.name}'s KT sessions.`,
       take_assessment: `${s.name}, answer each question with one letter: A, B, C or D.`,
       h4_signoff: `H4: ${s.name} passed the readiness rules (overall ${s.overall}%). Sign off to issue the readiness certificate.`,
@@ -623,7 +704,7 @@ class MockBackend {
       Object.assign(s, { outcome: `rejected at ${gate}` });
       await this.segment(run, ["__output_governance__"], null);
     } else {
-      const store: Record<string, string> = { review_plan: "review", confirm_slots: "slot_answer", kt_done: "kt_done", h1_expert_answers: "giver_answers", take_assessment: "answers" };
+      const store: Record<string, string> = { review_plan: "review", confirm_slots: "slot_answer", kt_done: "kt_done", confirm_reschedule: "reschedule_answer", h1_expert_answers: "giver_answers", take_assessment: "answers" };
       if (store[gate]) s[store[gate]] = decision === "rejected" ? {} : input;
       // decisions resume synchronously, like the real host: run to the next pause, then answer
       switch (gate) {
@@ -646,7 +727,11 @@ class MockBackend {
           await this.segment(run, SEG.toKtDone, "kt_done");
           break;
         case "kt_done":
-          await this.segment(run, SEG.toH1, "h1_expert_answers");
+          if (Number((s.kt_done as Record<string, unknown> | undefined)?.reschedule_day ?? 0)) await this.segment(run, SEG.reschedule, "confirm_reschedule");
+          else await this.segment(run, SEG.toH1, "h1_expert_answers");
+          break;
+        case "confirm_reschedule":
+          await this.segment(run, SEG.rebook, "kt_done");
           break;
         case "h1_expert_answers":
           await this.segment(run, SEG.toTest, "take_assessment");
