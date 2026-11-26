@@ -4,6 +4,7 @@
 agentmesh/hosts/
 # Downloaded kit: ZIPs, scaffolds, YAML, reports, manuals.
 inputs/
+handover-inputs-*.zip
 # Secrets and local settings (an .env.example we write ourselves, without URLs, is allowed).
 .env
 .env.*
