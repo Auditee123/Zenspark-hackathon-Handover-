@@ -215,7 +215,11 @@ contract in [agentmesh/API.md](agentmesh/API.md).
 - [x] `handover-kt-session` live: one turn, then `end_session` (notes stored)
 - [x] Orchestrator live with Priya: H2 (Kafka 2.5 and Claims 1.0 Not met) → approve → `review_plan` →
   `{move_skill_id:"kafka", to_day:2}` → v2 with Kafka on day 2
-- [ ] Full Priya run recorded as fixtures (`scripts/record_run.py`), in progress
+- [x] H3 two-approver gate enforced live (202 `partial`, then 200)
+- [ ] **BLOCKED after H3:** `save_plan` fails with `db_write refused: approval token signature is invalid
+  (approval_bad_signature)`. Needs the approval key (`ACTION_APPROVAL_SIM_SECRET`) from the mentor; see
+  agentmesh/PHASE1.md section 3
+- [ ] Full Priya run recorded as fixtures (recorded live up to H3; the rest waits for the key)
 
 **Phase 2: the React front end. In progress** in `agentmesh/web/`, built from the AgentMesh Serve scaffold.
 Milestones M1-M5 are in docs/PLAN.md.

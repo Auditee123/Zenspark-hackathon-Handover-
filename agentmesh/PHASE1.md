@@ -1,6 +1,7 @@
 # Phase 1 report: the AgentMesh hosts on localhost
 
-**Status, 26 Nov 2026, 13:40 IST: WORKING.** All three exported agents run live on this laptop:
+**Status, 26 Nov 2026, 13:50 IST: WORKING up to H3; approved writes are BLOCKED** (section 3). All three exported
+agents run live on this laptop:
 
 - they reach the AgentMesh platform over the Zenspark VPN;
 - strict governance passes;
@@ -21,7 +22,8 @@
 | Orchestrator, Priya input | `pending_hitl` at `h2_gap_approval` after 49 s. Gaps: Spring 4.0 Met, **Kafka 2.5 Not met**, **Claims 1.0 Not met**, PostgreSQL 3.0 Met, CI/CD 2.0 Partial, Observability 2.0 Partial, Ways 3.0 Met. 4 gaps, 2 critical |
 | `POST /approvals/{id}` H2 approve | HTTP 200 (`auth: anonymous_dev`); synchronous resume about 44 s → paused at `review_plan` (`kind: input`). Plan v1: 6 sessions, 5.5 h, Kafka on day 4 |
 | `POST /approvals/{id}` review_plan form `{move_skill_id: kafka, to_day: 2}` | HTTP 200 in under 1 s → **plan v2, Kafka on day 2**, `change_summary` = `Moved "Kafka on claims-events: retries and idempotent consumers" to day 2`. No AI step ran |
-| Full run recorded | `scripts/record_run.py` → `agentmesh/web/fixtures/priya-full-run.json` |
+| H3 two approvers (`min_approvals: 2`) | **Enforced live.** First approval → HTTP **202** `{status: "partial"}`; second approver → HTTP 200 (the Builder Test runner had moved on after one) |
+| Full run recording | `scripts/record_run.py` reached H3 live, then stopped at `save_plan` (section 3) |
 
 ## What was blocked, and how it was fixed
 
@@ -62,6 +64,50 @@ agentzoo.mcp.client.MCPToolError: MCP server data_gateway returned error for too
   assessments), and share its budgets and approvals.
 - **Question for the AgentMesh team:** how should a locally run export register its own tables without a deploy?
 
+### 3. OPEN: approved writes are refused (`approval_bad_signature`), so the run stops after H3
+Run `0c44eda3-c6f5-46b8-9515-3c15d98f0137` (Priya, team workspace prefix):
+
+- H2 approved, review_plan v2, review_plan approved;
+- H3 approved by `meera.nair@…` (HTTP 202 partial), then by `ananya.rao@…` (HTTP 200);
+- then `save_plan` (a `db_write` covered by the H3 approval) failed:
+
+```
+ERROR agentzoo.mcp.client MCP data_gateway.db_write returned error: Error executing tool db_write: db_write refused: approval token signature is invalid (approval_bad_signature)
+ERROR agentzoo.serving.definition_runtime Run 0c44eda3-c6f5-46b8-9515-3c15d98f0137 of w7d41b85-handover-orchestrator failed
+agentzoo.mcp.client.MCPToolError: MCP server data_gateway returned error for tool 'db_write': Error executing tool db_write: db_write refused: approval token signature is invalid (approval_bad_signature)
+```
+
+**Cause** (from the SDK, `agentzoo/actions/approvals.py`):
+
+- With neither `ACTION_APPROVAL_SECRET` nor `ACTION_APPROVAL_SIM_SECRET` set, a local host signs approval tokens
+  with a *derived per-machine dev secret* (`~/.agentzoo/action_approval_secret`).
+- The platform's data gateway doesn't recognise that key and refuses the write.
+- Writes not tied to an approval (`save_gaps` before H2) succeed.
+- `.env.example` says: "`ACTION_APPROVAL_SIM_SECRET`: the simulation approval key you were given, for writes that
+  need approval. Never the real `ACTION_APPROVAL_SECRET`."
+
+**Needed from the mentor:** the approval key for locally run hosts. It goes into the orchestrator's `.env` only,
+never into git (the pre-commit hook blocks it). We won't work around it.
+
+**Message for the AgentMesh team (copy-paste):**
+> We run the exported handover-orchestrator locally (AUTH_MODE=dev, AGENT_NAME_PREFIX=w7d41b85, agentzoo-sdk
+> 1.58.16, over the Zenspark VPN). Runs reach H3 live. After the two H3 approvals, `save_plan` (`db_write`) fails
+> with `db_write refused: approval token signature is invalid (approval_bad_signature)`. We have no
+> `ACTION_APPROVAL_SECRET` / `ACTION_APPROVAL_SIM_SECRET` set, so the SDK signs with its per-machine dev secret.
+> Which key should a locally run host use to sign approval tokens for the data gateway (presumably
+> `ACTION_APPROVAL_SIM_SECRET`), and can you share it with our team privately?
+
+### 4. Minor (non-fatal): Knowledge Search can't find the `knowledge` collection
+`search_project` (subgraph_call to the Knowledge Search horizontal agent) fails on every run:
+
+```
+ERROR horizontal.knowledge_search.nodes Search failed: MCP server knowledge returned error for tool 'search_knowledge': Error executing tool search_knowledge: Vector search unavailable for collection 'knowledge': UnexpectedResponse: Unexpected Response: 404 (Not Found)
+WARNING agentzoo.builder.node_types Node 'search_project' failed: Agent 'knowledge-search' returned an error and no output for node 'search_project': …
+```
+
+The run carries on (the node tolerates errors), but the KT plan gets no project context. Builder fix prompt #2 is in
+`docs/BUILDER-FIXES.md`.
+
 ## Contract facts learned live (also in API.md)
 - **A completed `/invoke` doesn't return the state.** `output` is `{text: "Run completed.", details: "/invocations/<id>",
   invocation_id, invocation_status}`. Read the answer from `GET /invocations/{id}` → `latest_state`.
@@ -82,7 +128,8 @@ agentzoo.mcp.client.MCPToolError: MCP server data_gateway returned error for too
 ## Builder follow-ups
 Prompts for the browser Claude are in [docs/BUILDER-FIXES.md](../docs/BUILDER-FIXES.md):
 
-- `handover-kt-session`: `write_notes` wraps the notes in a json code fence.
+- #1 `handover-kt-session`: `write_notes` wraps the notes in a json code fence.
+- #2 `handover-orchestrator`: `search_project` searches the default `knowledge` collection (404); point it at `handover-project`.
 
 ## Harmless warnings in the host logs
 - The tracing collector `ca-phoenix.internal` isn't resolvable from a laptop. Spans are dropped.
