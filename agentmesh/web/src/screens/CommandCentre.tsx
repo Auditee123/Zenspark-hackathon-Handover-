@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowUpRight, UserPlus } from "lucide-react";
 import { useStore } from "../state/store";
-import { PAUSES, STAGES, nameOf, stageOf } from "../runtime/pauses";
+import { PAUSES, PEOPLE, STAGES, nameOf, stageOf } from "../runtime/pauses";
 import type { StageKey } from "../runtime/pauses";
 import type { RunView } from "../runtime/types";
 import { Card, Empty, ErrorState, Kpi, Loading, PageHead, Pill, Progress, Seg, Who, fmtTime } from "../components/ui";
@@ -48,7 +48,7 @@ export default function CommandCentre() {
     <div className="content page">
       <PageHead
         eyebrow="Command centre"
-        title="Good morning, Meera"
+        title={`Good morning, ${PEOPLE.lead.name}`}
         lead="Every new joiner on Claims Platform Modernisation, where they are, and what needs you. Agents do the work in between; you approve at four points."
         agent="orch"
         actions={

@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Download, Play, Upload } from "lucide-react";
 import { useStore } from "../state/store";
-import { CSV_COLUMNS, PRIYA_INPUT } from "../runtime/samples";
+import { CSV_COLUMNS, SAMPLE_JOINER } from "../runtime/samples";
 import { Card, ErrorState, Field, Note, PageHead, Pill, Tabs } from "../components/ui";
 
 type Form = Record<string, string>;
@@ -53,7 +53,7 @@ export default function Onboard() {
   const [bulkDone, setBulkDone] = useState<string[]>([]);
   const set = (k: string) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
 
-  const useSample = () => setF(Object.fromEntries(Object.keys(EMPTY).map((k) => [k, String(PRIYA_INPUT[k] ?? EMPTY[k])])));
+  const useSample = () => setF(Object.fromEntries(Object.keys(EMPTY).map((k) => [k, String(SAMPLE_JOINER[k] ?? EMPTY[k])])));
   const toInput = (x: Form) => ({ ...x, mode: "run", round: 1, candidate_id: slug(x.name) || `joiner-${Date.now()}` });
 
   const submit = async (e: FormEvent) => {
@@ -102,7 +102,7 @@ export default function Onboard() {
       />
       {tab === "one" && (
         <div className="split">
-          <Card title="Joiner details" actions={<button type="button" className="btn sm" onClick={useSample}>Use sample: Priya Sharma</button>}>
+          <Card title="Joiner details" actions={<button type="button" className="btn sm" onClick={useSample}>Use sample: Auditee</button>}>
             <form className="stack" style={{ gap: 14 }} onSubmit={submit}>
               <div className="grid g2">
                 <Field label="Full name">

@@ -139,7 +139,7 @@ export function TopBar() {
   const active = runs.filter((r) => r.status !== "completed" || r.state.ready);
   const changeRole = (r: Role) => {
     setViewAs(r);
-    toast(r === "lead" ? "Viewing as Meera Nair, the transition lead" : r === "giver" ? "Viewing as Rahul Verma, a KT giver" : `Viewing as ${selected ? nameOf(selected) : "the joiner"}, the new joiner`);
+    toast(r === "lead" ? `Viewing as ${PEOPLE.lead.name}, the transition lead` : r === "giver" ? `Viewing as ${PEOPLE.giver.name}, a KT giver` : `Viewing as ${selected ? nameOf(selected) : "the joiner"}, the new joiner`);
     if (r === "joiner" && !["/me", "/review", "/schedule", "/session", "/assessment", "/ask"].includes(loc.pathname)) navigate("/me");
     if (r === "giver" && !["/giver", "/review", "/session", "/ask"].includes(loc.pathname)) navigate("/giver");
     if (r === "lead" && ["/me", "/giver"].includes(loc.pathname)) navigate("/");

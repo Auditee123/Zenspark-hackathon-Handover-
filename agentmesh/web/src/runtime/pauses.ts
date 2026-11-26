@@ -45,8 +45,8 @@ export const ROLE_LABEL: Record<Role, string> = { lead: "Transition lead", joine
 
 /** Synthetic personas (from the prototype). */
 export const PEOPLE = {
-  lead: { name: "Meera Nair", title: "Transition lead · Zensar", email: "meera.nair@zensar.example" },
-  giver: { name: "Rahul Verma", title: "KT giver · Integration", email: "rahul.verma@zensar.example" },
+  lead: { name: "Ricky", title: "Transition lead · Zensar", email: "ricky@zensar.example" },
+  giver: { name: "Prakhar", title: "KT giver · Integration", email: "prakhar@zensar.example" },
 };
 
 export function stageOf(run: RunView): StageKey {

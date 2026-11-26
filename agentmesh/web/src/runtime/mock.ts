@@ -47,8 +47,8 @@ const roleSkills = (role: string): (RoleSkill & { docs: string })[] =>
   }));
 
 const GIVERS: (Giver & { slot_a: string; slot_b: string })[] = [
-  { giver_id: "ananya", name: "Ananya Rao", email: "ananya.rao@zensar.example", skills: "claims;ways", slot_a: "10:00", slot_b: "15:00" },
-  { giver_id: "rahul", name: "Rahul Verma", email: "rahul.verma@zensar.example", skills: "kafka;spring;pg", slot_a: "10:00", slot_b: "14:00" },
+  { giver_id: "ananya", name: "Murali", email: "murali@zensar.example", skills: "claims;ways", slot_a: "10:00", slot_b: "15:00" },
+  { giver_id: "rahul", name: "Prakhar", email: "prakhar@zensar.example", skills: "kafka;spring;pg", slot_a: "10:00", slot_b: "14:00" },
   { giver_id: "sneha", name: "Sneha Iyer", email: "sneha.iyer@zensar.example", skills: "cicd;ways", slot_a: "11:00", slot_b: "15:00" },
   { giver_id: "karan", name: "Karan Shah", email: "karan.shah@zensar.example", skills: "obs;pg;spring", slot_a: "10:00", slot_b: "16:00" },
   { giver_id: "divya", name: "Divya Menon", email: "divya.menon@zensar.example", skills: "pw;api;tdata;triage", slot_a: "11:00", slot_b: "14:00" },
@@ -70,7 +70,7 @@ const PRIYA_EVIDENCE: Record<string, { r: Ratings; quotes: string[] }> = {
   ways: { r: [3, null, 3, 3], quotes: ["L2: Communicates clearly; new to client-facing work.", "L3: Good attitude; will need help with Northwind contacts at first."] },
 };
 function evidenceFor(candidate: string): Record<string, { r: Ratings; quotes: string[] }> {
-  if (candidate === "priya-sharma") return PRIYA_EVIDENCE;
+  if (candidate === "priya-sharma" || candidate === "auditee") return PRIYA_EVIDENCE;
   // Any other synthetic joiner: deterministic ratings derived from the id.
   let h = 0;
   for (const c of candidate) h = (h * 31 + c.charCodeAt(0)) >>> 0;
@@ -673,7 +673,7 @@ class MockBackend {
 // ---------------------------------------------------------------- handover-qa and handover-kt-session (canned, synthetic)
 function qaAnswer(q: string, expert: string[]) {
   const t = q.toLowerCase();
-  if (/(panel|interview|feedback|l1|l2|l3|assessment result|score)/.test(t) && /(priya|karthik|neha|say|said|about)/.test(t))
+  if (/(panel|interview|feedback|l1|l2|l3|assessment result|score)/.test(t) && /(auditee|priya|karthik|neha|say|said|about)/.test(t))
     return { answer: "That information is not available in this chat.", trust: "Blocked", citations: [], grounded: { verdict: "not_applicable" } };
   if (/retry/.test(t) && /(three|3|five|limit)/.test(t)) {
     if (expert.length)

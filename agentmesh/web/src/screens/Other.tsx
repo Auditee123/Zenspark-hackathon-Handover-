@@ -120,7 +120,7 @@ export function JoinerHome() {
           )}
         </Card>
         <Card title="My plan">
-          <p className="small">{s.plan ? `${s.plan.length} sessions · ${s.plan_hours ?? ""} hours${s.plan_approved ? " · approved by Meera Nair and the lead KT giver" : " · in review"}` : "Your plan is being prepared."}</p>
+          <p className="small">{s.plan ? `${s.plan.length} sessions · ${s.plan_hours ?? ""} hours${s.plan_approved ? ` · approved by ${PEOPLE.lead.name} and the lead KT giver` : " · in review"}` : "Your plan is being prepared."}</p>
           <Link className="btn sm" to="/review" style={{ alignSelf: "flex-start" }}>
             View plan
           </Link>

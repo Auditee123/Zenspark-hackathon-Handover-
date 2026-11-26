@@ -39,7 +39,7 @@ export default function Scheduler() {
       <PageHead
         eyebrow="Step 4 · KT scheduler"
         title={viewAs === "joiner" ? "Pick a time for each KT session" : `Schedule ${nameOf(run)}'s KT`}
-        lead="The scheduler checks each KT giver's calendar, offers two free slots per session, and books them once the joiner confirms. Busy times are avoided (Rahul is busy on 1 Dec at 14:00, Ananya on 2 Dec at 10:00)."
+        lead="The scheduler checks each KT giver's calendar, offers two free slots per session, and books them once the joiner confirms. Busy times are avoided (for example 1 Dec at 14:00 and 2 Dec at 10:00 are blocked in the givers' calendars)."
         agent="orch"
         actions={
           sessions.length ? (
