@@ -15,7 +15,11 @@ Status: ☐ open · ☑ done in the Builder · ⊘ not needed
 
 ---
 
-## ☐ 1. `handover-kt-session`: session notes stored as a JSON code fence
+## ☑ 1. `handover-kt-session`: session notes stored as a JSON code fence
+
+**Done in the Builder on 26 Nov (about 08:27 UTC)** in `ZE_000046_Handover`, export `handover-kt-session_v3.zip`. The
+`session_notes` prompt now asks for plain text ("Do not use JSON, Markdown code fences or backticks"). Builder Test passed
+(7.1 s). Local re-test: see agentmesh/PHASE1.md.
 
 **Prompt to paste:**
 
@@ -48,7 +52,12 @@ Status: ☐ open · ☑ done in the Builder · ⊘ not needed
 
 ---
 
-## ☐ 2. `handover-orchestrator`: `search_project` searches a collection that doesn't exist
+## ☑ 2. `handover-orchestrator`: `search_project` searches a collection that doesn't exist
+
+**Done in the Builder on 26 Nov (about 08:27 UTC)** in `ZE_000046_Handover`, export `handover-orchestrator_v3.zip`.
+`search_project` is now an `mcp_call` to `knowledge.search_multi` on `handover-project` and `handover-expert-answers`.
+`project_context` changed from string to list. The Builder Test returned 6 hits with no 404. Local re-test: see
+agentmesh/PHASE1.md.
 
 **Prompt to paste:**
 

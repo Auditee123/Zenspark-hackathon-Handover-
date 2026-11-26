@@ -259,6 +259,8 @@ export interface OrchState {
   outcome?: string;
   score_table?: string;
   certificate_md?: string;
+  /** search_project (knowledge.search_multi, since the 26 Nov v3 export): a list of hits, not a string. */
+  project_context?: { id?: string; score?: number; text?: string; metadata?: Record<string, unknown> }[];
   stored_resume?: Record<string, unknown>;
   stored_l1?: Record<string, unknown>;
   stored_l2?: Record<string, unknown>;

@@ -445,6 +445,9 @@ class MockBackend {
       }
       case "after_h2":
         return set({ gaps_approved: true });
+      case "search_project":
+        // Mirrors the live step: knowledge.search_multi returns a list of hits.
+        return set({ project_context: ["Engagement handbook", "Incident playbook", "Owner directory", "Claims domain primer"].map((title, i) => ({ id: `mock-${i}`, score: 0.6 - i * 0.05, text: `(${title}, synthetic)`, metadata: { title, collection: "handover-project" } })) });
       case "draft_plan":
         return set(draftPlan(s));
       case "apply_review":

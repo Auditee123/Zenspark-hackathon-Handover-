@@ -108,6 +108,29 @@ WARNING agentzoo.builder.node_types Node 'search_project' failed: Agent 'knowled
 The run carries on (the node tolerates errors), but the KT plan gets no project context. Builder fix prompt #2 is in
 `docs/BUILDER-FIXES.md`.
 
+## Re-test after Builder fixes 1 and 2 (v3 exports, 26 Nov ~14:45 IST)
+Both new ZIPs carried the fix before unpacking.
+
+- **kt-session:** the new `session_notes` prompt ("Do not use JSON…").
+- **orchestrator:** `search_project` is now an `mcp_call` to `knowledge.search_multi` on `handover-project` and
+  `handover-expert-answers`.
+- A YAML diff against the previous export showed nothing else changed: only that node, plus `project_context`
+  string → list.
+
+| Test | Result |
+|---|---|
+| 5a kt-session, `end_session: true` | **Pass.** `notes` starts with `Session:`, no backticks, no JSON keys (Key points / Open questions: None / Understanding check). `store_notes` → `indexed`. The reply has no JSON; it uses inline code for `claim_event_id`, which is ordinary Markdown. Citations: `project-claims_events_design`, `handover-expert-answers-r1/-r2` |
+| 5b orchestrator to `review_plan` | **Pass, same as the Builder.** `search_project` returned 6 hits from shared collections (Engagement Handbook, Priya expert answers r1 and r2, Incident Playbook, Owner Directory, Claims Domain Primer) in 2.7 s. `project_context` is a list. No 404 in the log. The H2 decision now resumes in **6 s instead of 44 s**: the old Knowledge Search call took about 40 s before failing |
+| 5c through `take_assessment` | **Not reachable live.** After `review_plan` approve → H3 202 partial → H3 200, `save_plan` again fails with `db_write refused: approval token signature is invalid (approval_bad_signature)` (section 3). How `gen_questions` handles the list-type `project_context` can only be checked once the approval key is set |
+| 5d UI and `project_context` | No UI code reads it. Typed as a list of hits in `src/runtime/types.ts`; mock mode now produces a list too. `npm run gen:nodes` updated `search_project` to `mcp_call` |
+
+- **Note for `gen_questions`:** its prompt inlines `{{ state.project_context }}`, which now renders the raw hit list
+  (ids, scores, metadata and text) as Python-style text. It should still work but makes the prompt longer. If the
+  questions degrade, a Builder tweak can render only the titles and text.
+- **Laptop note:** during this re-test the VPN dropped and Cisco Umbrella came back on (the hosts refused to start:
+  "NOT REACHABLE"). After reconnecting, the platform resolved to 10.20.5.212, Content Safety to 10.20.2.4, and
+  Umbrella was off.
+
 ## Contract facts learned live (also in API.md)
 - **A completed `/invoke` doesn't return the state.** `output` is `{text: "Run completed.", details: "/invocations/<id>",
   invocation_id, invocation_status}`. Read the answer from `GET /invocations/{id}` → `latest_state`.

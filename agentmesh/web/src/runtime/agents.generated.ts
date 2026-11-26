@@ -167,9 +167,9 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinitionSummary> = {
       },
       {
         "id": "search_project",
-        "type": "subgraph_call",
-        "description": "Knowledge Search horizontal agent: project docs for the gaps",
-        "tool": "knowledge-search"
+        "type": "mcp_call",
+        "description": "Search the project documents and expert answers for the gaps",
+        "tool": "knowledge.search_multi"
       },
       {
         "id": "draft_plan",
