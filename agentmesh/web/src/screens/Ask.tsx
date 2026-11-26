@@ -127,7 +127,7 @@ export default function Ask() {
               </button>
             ))}
           </div>
-          <p className="tiny muted">Each question is one live run of handover-qa: search_multi on the allowed collections, an answer with citations, then a grounding check. Typical time: 15 to 25 seconds.</p>
+          <p className="tiny muted">Each question is one live run of handover-qa. An AI privacy check comes first: questions about a person's interview, hiring or assessment record are refused without searching. Other questions go to search_multi on the allowed collections, an answer with citations, then a grounding check. Typical time: 15 to 30 seconds.</p>
         </Card>
       </div>
     </div>

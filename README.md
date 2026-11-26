@@ -330,8 +330,8 @@ contract in [agentmesh/API.md](agentmesh/API.md).
     in the saved rows;
   - **then prompt 4:** emailed invites and the reschedule loop.
   - Prompt 3 (team names, v4) and prompt 5 (no stored addresses, per-run contacts, v5) are done and verified.
-  - Prompt 6 (`handover-qa` privacy rule first, v5) is done, but the refusal still varies between runs.
-  - **Prompt 7 (`handover-qa`):** a deterministic privacy guard in code before the search.
+  - Prompts 6 and 7 (`handover-qa`) are done and verified (v6): an AI privacy check runs before the search; 26/26
+    live runs behave correctly.
 
 - **Publish isn't available in the Builder yet.** The team lead is checking with the organisers. The host ZIPs
   (26 Nov, 11:03-11:05 IST) match the latest agent YAML.

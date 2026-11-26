@@ -645,6 +645,17 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinitionSummary> = {
     "governance": "strict",
     "nodes": [
       {
+        "id": "privacy_check",
+        "type": "llm_structured",
+        "description": "Classify whether the question asks for a person's interview, hiring or assessment record",
+        "model": "large"
+      },
+      {
+        "id": "refuse",
+        "type": "set",
+        "description": "Privacy refusal without searching"
+      },
+      {
         "id": "search",
         "type": "mcp_call",
         "description": "Search only the allowed collections (privacy wall)",
@@ -671,7 +682,21 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinitionSummary> = {
     "edges": [
       {
         "from": "START",
-        "to": "search"
+        "to": "privacy_check"
+      },
+      {
+        "from": "privacy_check",
+        "to": "refuse",
+        "conditional": true
+      },
+      {
+        "from": "privacy_check",
+        "to": "search",
+        "conditional": true
+      },
+      {
+        "from": "refuse",
+        "to": "reply"
       },
       {
         "from": "search",

@@ -202,6 +202,24 @@ Both new ZIPs carried the fix before unpacking.
   together. `make hosts` now runs `scripts/start-hosts.sh`: the hosts start one by one, and a host that stops at
   start-up is retried (up to 3 times). Cold start of all three: 12 s.
 
+## Re-test on handover-qa v6 (fix 7: AI privacy check before the search), 26 Nov ~22:00 IST
+- **Review:** 10 differences, all from the prompt:
+  - `privacy_check` (structured AI step: model large, quality first, names not masked);
+  - `refuse` (Set values);
+  - the edges START → `privacy_check` → (`refuse` → `reply` | `search` → …);
+  - two hidden state fields and the `privacy_check` prompt.
+
+  The `qa_answer` first rule and the grounding fix are kept. No real address.
+- **Stability, live, 26/26 runs pass:**
+  - The six personal questions, **3 runs each (18/18 Blocked)**. Every one took `privacy_check → refuse → reply`, with
+    no search.
+  - Two new paraphrases (not in any prompt) were also Blocked, with sensible reasons, e.g. "It asks for a specific
+    person's assessment performance in a readiness test, which is a personal record."
+  - Six ordinary questions went through search and answered correctly.
+  - **Cost:** blocked about $0.001 and 12–14 s; answered about $0.009 and 25–30 s.
+- **`make smoke`: 13 of 13.** The live Ask UI check (`agentmesh/web/scripts/live-ask-check.mjs`) passes: a cited answer;
+  the privacy-wall card; the trace pane shows `privacy_check` → `refuse` → `reply`.
+
 ## Contract facts learned live (also in API.md)
 - **A completed `/invoke` doesn't return the state.** `output` is `{text: "Run completed.", details: "/invocations/<id>",
   invocation_id, invocation_status}`. Read the answer from `GET /invocations/{id}` → `latest_state`.

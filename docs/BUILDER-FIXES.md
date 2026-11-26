@@ -399,7 +399,10 @@ The full prompt was handed over in chat on 26 Nov.
 
 ---
 
-## ☐ 7. `handover-qa`: an AI privacy check before the search
+## ☑ 7. `handover-qa`: an AI privacy check before the search
+
+**Done on 26 Nov (15:56 UTC), export `handover-qa_v6.zip`.** Verified locally: 26/26 live runs, smoke 13/13, and the Ask
+UI check (PHASE1.md).
 
 The full prompt was handed over in chat on 26 Nov. It replaces an earlier keyword-based idea, which was rejected
 because the decision should come from real model understanding.
