@@ -97,6 +97,30 @@ never into git (the pre-commit hook blocks it). We won't work around it.
 > Which key should a locally run host use to sign approval tokens for the data gateway (presumably
 > `ACTION_APPROVAL_SIM_SECRET`), and can you share it with our team privately?
 
+**Update, 26 Nov ~16:00 IST: the Key Vault read is refused by the vault firewall.** The AgentMesh team said the key
+is in their test Key Vault (name shared privately) as the secret `action-approval-sim-secret`.
+
+- `az login --service-principal` with the hosts' service principal: **succeeds**. (If the client secret starts with
+  `-`, pass it as `--password="$AZURE_CLIENT_SECRET"`.)
+- `az keyvault secret show … --query value -o tsv`: fails after about 4 minutes with:
+
+```
+ERROR: (Forbidden) Client address is not authorized and caller is not a trusted service.
+Code: Forbidden
+Inner error: { "code": "ForbiddenByFirewall" }
+```
+
+- The vault saw this laptop's **public** client address, not a VPN or private one. With Cisco Umbrella on, both the
+  vault hostname and its `privatelink.vaultcore.azure.net` name resolve to public addresses, as Content Safety did
+  (section 1 of "What was blocked").
+- This is a network refusal. The service principal's read permission on the secret was never evaluated.
+- `ACTION_APPROVAL_SIM_SECRET` is still unset, so 5c (the full Priya run through `take_assessment` and H4) was
+  not attempted. It would stop at `save_plan` as before.
+- **Next:**
+  - Retry with Umbrella off, in case the vault's private endpoint is reachable over the Zenspark VPN.
+  - Otherwise, ask the AgentMesh team either to allow the VPN egress range in the vault firewall, or to share the
+    key privately.
+
 ### 4. Minor (non-fatal): Knowledge Search can't find the `knowledge` collection
 `search_project` (subgraph_call to the Knowledge Search horizontal agent) fails on every run:
 
