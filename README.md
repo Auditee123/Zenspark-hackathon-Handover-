@@ -164,6 +164,7 @@ curl -s -X POST localhost:8002/invoke/handover-qa -H 'Content-Type: application/
 | `No read access to the AgentMesh package feed` | The service principal or your account lacks feed access; ask the organisers |
 | `Need Python 3.11 or later`, or build errors on 3.14 | `brew install python@3.12`, delete the host's `.venv`, start again |
 | `/invoke` answers 401, or tools fail with `mcp_auth_failed` | `AUTH_MODE=dev` in that host's `.env` |
+| `/invoke` returns `input_governance_blocked: content_safety:unavailable,prompt_shield:unavailable` | Platform network issue, not your setup; see agentmesh/PHASE1.md |
 | Orchestrator: `no registered table 'role_skills'` | Known platform issue; see Status below (we retry with `AGENT_NAME_PREFIX=wee77963`) |
 
 ---
@@ -177,7 +178,10 @@ scripts/doctor.sh        readiness check (make doctor)
 Makefile                 setup, doctor, hosts-unpack, hosts, stop, health, logs
 docs/PLAN.md             plan, milestones, checklist: where to pick up
 CLAUDE.md                instructions for Claude Code sessions
-agentmesh/               (gitignored hosts/; API.md and web/ arrive in Phase 1-2)
+agentmesh/API.md         confirmed host runtime contract
+agentmesh/PHASE1.md      Phase 1 report: what works, what is blocked, options
+agentmesh/api/           openapi.json of each host
+agentmesh/hosts/         gitignored: the exported hosts (make hosts-unpack)
 inputs/                  gitignored: host ZIPs, scaffolds, docs, kit
 logs/                    gitignored: host logs
 ```
@@ -188,21 +192,28 @@ logs/                    gitignored: host logs
 
 Last updated **26 Nov 2026**. Details and the milestone checklist are in [docs/PLAN.md](docs/PLAN.md).
 
-**Phase 1: run the hosts locally (in progress)**
+**Phase 1: run the hosts locally. Hosts are up; agent runs are BLOCKED on a platform network issue.**
+Full report in [agentmesh/PHASE1.md](agentmesh/PHASE1.md); the contract is in [agentmesh/API.md](agentmesh/API.md).
 
 - [x] Workspace, `.gitignore`, secret hook, unpack script, `make doctor`
 - [x] Service principal works: Entra sign-in, private package feed, content-safety scope
 - [x] Zenspark VPN reaches the AgentMesh platform services
-- [ ] First start of all three hosts (installing the SDK now) and `/health` on 8001-8003
-- [ ] `agentmesh/API.md`: the real contract from each host's `/docs`. It must settle:
-  - the `POST /approvals/{id}` body for gates and for ask_user forms;
-  - the shapes of `/invocations/{id}` and `/approvals/pending`;
-  - whether `POST /invoke/{agent}/stream` (SSE) exists.
-- [ ] Smoke-test `handover-qa`: Fatima Khan / claims-events.DLQ / refusal with trust `Blocked`
-- [ ] Smoke-test `handover-kt-session`: one turn, then `end_session`
-- [ ] Smoke-test the orchestrator with the Priya input: pause at H2 → approve → `review_plan` → submit
-  `{move_skill_id:"kafka", to_day:2}` → v2 with Kafka on day 2
-- [ ] Phase 1 report (`agentmesh/PHASE1.md`)
+- [x] All three hosts install and run; `/health` healthy on 8001-8003 (agentzoo-sdk 1.58.16)
+- [x] `agentmesh/API.md`:
+  - no SSE route (the UI polls);
+  - `/approvals/{id}` body confirmed, with `submitted` + `input` for forms;
+  - decisions are synchronous;
+  - H3 returns 202 `partial` after the first approval.
+- [ ] **BLOCKED.** Every `/invoke` returns
+  `input_governance_blocked: content_safety:unavailable,prompt_shield:unavailable`.
+  - Azure Content Safety answers 403 "Public access is disabled", and the VPN doesn't resolve its private endpoint.
+  - The agents are `strict`, so they fail closed.
+  - Options: the organisers fix the VPN DNS, or provide another endpoint, or we lower governance in the Builder
+    (see PHASE1.md).
+- [ ] Smoke-test `handover-qa`: Fatima Khan / claims-events.DLQ / refusal with trust `Blocked` (blocked by the above)
+- [ ] Smoke-test `handover-kt-session`: one turn, then `end_session` (blocked)
+- [ ] Smoke-test the orchestrator with the Priya input: H2 → approve → `review_plan` → submit
+  `{move_skill_id:"kafka", to_day:2}` → v2 (blocked)
 
 **Phase 2: the React front end.** Not started; it begins only after Phase 1 reports. Milestones M1-M5 are in
 docs/PLAN.md.

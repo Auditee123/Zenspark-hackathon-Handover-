@@ -12,14 +12,15 @@ Freeze **Mon 30 Nov 2026**; jury demo **Tue 1 Dec 2026** on localhost.
 - [x] Python 3.12 installed. Service principal checked: Entra sign-in, package feed (agentzoo-sdk 1.58.16,
       agentzoo-agent-horizontal 1.6.17), content-safety scope
 - [x] Zenspark VPN reaches the AgentMesh platform services
-- [ ] First start of all three hosts (SDK and spaCy install), then `/health` 200 on 8001, 8002 and 8003
-- [ ] `agentmesh/API.md`, the confirmed runtime contract from `/docs` and `openapi.json`. Pin down:
-  - [ ] `POST /approvals/{invocation_id}`: the gate body (`gate`, `decision` approved|rejected, `notes`, `reviewer`?)
-  - [ ] `POST /approvals/{invocation_id}`: the ask_user body (likely `{gate, decision:"submitted", input:{…}}`)
-  - [ ] `GET /approvals/pending`, `GET /invocations`, `GET /invocations/{id}` (state, timeline, pending gate,
+- [x] First start of all three hosts (SDK and spaCy install), then `/health` 200 on 8001, 8002 and 8003
+- [x] `agentmesh/API.md`, the confirmed runtime contract from `/docs` and `openapi.json`. Pin down:
+  - [x] `POST /approvals/{invocation_id}`: the gate body (`gate`, `decision` approved|rejected, `notes`, `reviewer`?)
+  - [x] `POST /approvals/{invocation_id}`: the ask_user body (likely `{gate, decision:"submitted", input:{…}}`)
+  - [x] `GET /approvals/pending`, `GET /invocations`, `GET /invocations/{id}` (state, timeline, pending gate,
         `input_schema`?) and `/invocations/stats`
-  - [ ] whether `POST /invoke/{agent}/stream` (SSE) exists, and its event names and payloads
-  - [ ] the SDK version. If a body is an untyped dict, read the installed SDK source to confirm it (read-only)
+  - [x] whether `POST /invoke/{agent}/stream` (SSE) exists, and its event names and payloads
+  - [x] the SDK version. If a body is an untyped dict, read the installed SDK source to confirm it (read-only)
+- [ ] **BLOCKED: every /invoke fails with `input_governance_blocked` (Content Safety unreachable privately over the VPN; see agentmesh/PHASE1.md).** Waiting on organisers or mentor, or a Builder governance decision
 - [ ] Smoke-test `handover-qa` with curl, using the runbook questions:
   - "Who approves a production release?" → Fatima Khan, trust Project documents
   - "Where do failed claim events go?" → claims-events.DLQ after three retries
@@ -31,7 +32,7 @@ Freeze **Mon 30 Nov 2026**; jury demo **Tue 1 Dec 2026** on localhost.
   - [ ] submit `{move_skill_id:"kafka", to_day:2}` → plan v2, "Moved … to day 2"
   - [ ] on `no registered table`: set `AGENT_NAME_PREFIX=wee77963`, restart, retry. If it still fails, stop and report
   - [ ] watch `integrity.write_refused`; `ACTION_APPROVAL_SIM_SECRET` may be needed from the mentor
-- [ ] `agentmesh/PHASE1.md`: what works, what is blocked, exact errors, decisions needed
+- [x] `agentmesh/PHASE1.md`: what works, what is blocked, exact errors, decisions needed
 
 ## Phase 2: the front end (starts after Phase 1 reports and the team lead approves)
 

@@ -19,6 +19,7 @@ handover-inputs-*.zip
 __pycache__/
 *.pyc
 logs/
+agentmesh/smoke/
 
 # --- Web -------------------------------------------------------------------
 node_modules/
