@@ -30,7 +30,8 @@ Freeze **Mon 30 Nov 2026**; jury demo **Tue 1 Dec 2026** on localhost.
   - [ ] `pending_hitl` at `h2_gap_approval`. Expected gaps: Spring 4.0 Met, Kafka 2.5 Not met, Claims 1.0 Not met
   - [ ] approve H2 via `/approvals/{id}` → paused at `review_plan`
   - [ ] submit `{move_skill_id:"kafka", to_day:2}` → plan v2, "Moved … to day 2"
-  - [ ] on `no registered table`: set `AGENT_NAME_PREFIX=wee77963`, restart, retry. If it still fails, stop and report
+  - [ ] on `no registered table`: set `AGENT_NAME_PREFIX=w7d41b85` (team workspace; needs one seed Test run
+        `{"mode":"seed"}` there first), restart, retry. If it still fails, stop and report
   - [ ] watch `integrity.write_refused`; `ACTION_APPROVAL_SIM_SECRET` may be needed from the mentor
 - [x] `agentmesh/PHASE1.md`: what works, what is blocked, exact errors, decisions needed
 
@@ -101,6 +102,10 @@ If the orchestrator stays blocked on tables or writes, build M3–M4 against lab
 live once unblocked. Replay needs at least one real recorded run before the freeze.
 
 ## Open questions (team lead and mentor)
+- **Master copy:** the team workspace `ZE_000046_Handover` (since 26 Nov). Its Test runs run as `w7d41b85-<agent>`.
+  Edit only there, then re-export. Never edit the My workspace copies.
+- **Team-workspace tables:** run one `{"mode":"seed"}` Test on `handover-orchestrator` in `ZE_000046_Handover` before
+  relying on the `w7d41b85` prefix.
 - Publish isn't available in the Builder; the team lead is checking with the organisers. The host ZIPs from 26 Nov
   match the latest agent YAML.
 - Table registration for locally run agents (see the Phase 1 fallback above).

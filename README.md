@@ -26,8 +26,15 @@ The jury demo runs on localhost on **1 Dec 2026**; the freeze is **30 Nov**. All
   `agentmesh/hosts/` and `inputs/` are gitignored. Never commit an `.env` file or a VPN profile.
 - Run `make setup` once per clone. It enables `.githooks/pre-commit`, which blocks secrets
   (a filled-in client secret, PATs, keys in `VITE_*` variables) and private platform hostnames.
-- **Agents and prompts change only in the AgentMesh Builder.** Don't edit `definitions/*.yaml` locally to change
-  behaviour. Change it in the Builder, export the ZIP again, then run `make hosts-unpack`.
+- **Agents and prompts change only in the AgentMesh Builder, in the team workspace `ZE_000046_Handover`.** That is
+  the master copy (`handover-orchestrator` 63 nodes, `handover-qa` 4, `handover-kt-session` 6); its Test runs run as
+  `w7d41b85-<agent>`. **Never edit the old copies in My workspace.** Don't edit `definitions/*.yaml` locally.
+  To pick up a change:
+  1. In `ZE_000046_Handover`, open the agent and use Deploy → Download ZIP.
+  2. Replace `inputs/zips/<agent>.zip` with it.
+  3. Run `make hosts-unpack`. It replaces `definitions/<agent>.yaml` and the host code, and keeps `.env`, `.venv`
+     and `.local`.
+  4. Restart the hosts: `make stop && make hosts`.
 - Don't fake AgentMesh. The only exception is the clearly labelled replay/mock modes of the web app (Phase 2).
 - Synthetic data only.
 
@@ -165,7 +172,7 @@ curl -s -X POST localhost:8002/invoke/handover-qa -H 'Content-Type: application/
 | `Need Python 3.11 or later`, or build errors on 3.14 | `brew install python@3.12`, delete the host's `.venv`, start again |
 | `/invoke` answers 401, or tools fail with `mcp_auth_failed` | `AUTH_MODE=dev` in that host's `.env` |
 | `/invoke` returns `input_governance_blocked: content_safety:unavailable,prompt_shield:unavailable` | Platform network issue, not your setup; see agentmesh/PHASE1.md |
-| Orchestrator: `no registered table 'role_skills'` | Known platform issue; see Status below (we retry with `AGENT_NAME_PREFIX=wee77963`) |
+| Orchestrator: `no registered table 'role_skills'` | Known platform issue; see Status below (we retry with `AGENT_NAME_PREFIX=w7d41b85`, after a seed Test run in the team workspace) |
 
 ---
 
@@ -224,7 +231,9 @@ docs/PLAN.md.
   (26 Nov, 11:03-11:05 IST) match the latest agent YAML.
 - **Orchestrator tables.** Outside the Builder, the orchestrator may fail with
   `no registered table 'role_skills' … deploy/register first`. Agreed fallback: set
-  `AGENT_NAME_PREFIX=wee77963` in its `.env` (the Builder workspace's agent name, where the tables exist) and retry.
+  `AGENT_NAME_PREFIX=w7d41b85` in its `.env` (the team workspace `ZE_000046_Handover`'s agent name) and retry.
+  **Prerequisite:** run one Builder Test with `{"mode":"seed"}` on `handover-orchestrator` in `ZE_000046_Handover`
+  (about 17 s). Its tables are created and filled only by a Test run there.
   If that fails too, the mentor must register the tables or deploy the agent.
 - **Approved writes.** The orchestrator's `db_write` steps may need `ACTION_APPROVAL_SIM_SECRET` from the
   mentor (watch for `integrity.write_refused` in `/invoke` responses).

@@ -53,7 +53,7 @@ Not yet tested, because of the block:
 - the qa answers;
 - the kt turns;
 - the orchestrator path (H2, then an approval, then the `review_plan` form);
-- the "no registered table" fallback (`AGENT_NAME_PREFIX=wee77963`);
+- the "no registered table" fallback (`AGENT_NAME_PREFIX=w7d41b85`, the team workspace, after a seed Test run there);
 - `write_refused`.
 
 ## Options (needs a decision)

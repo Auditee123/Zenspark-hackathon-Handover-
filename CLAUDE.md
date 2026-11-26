@@ -20,12 +20,17 @@ demo on 1 Dec 2026. The freeze is 30 Nov 2026.
    The pre-commit hook enforces this (`make setup`). Never bypass it with `--no-verify`.
 2. **Never print or log secret values.** To check `.env`, test for presence or shape only (see `scripts/doctor.sh`).
    No `VITE_*` variable may hold a key.
-3. **Agents and prompts change only in the AgentMesh Builder.** Don't edit `agentmesh/hosts/*/definitions/*.yaml`
+3. **Agents and prompts change only in the AgentMesh Builder, in the team workspace `ZE_000046_Handover`.** It is
+   the master copy; its Test runs run as `w7d41b85-<agent>`. Never edit the old copies in My workspace (`wee77963-`).
+   To pick up a change: Deploy → Download ZIP there, replace `inputs/zips/<agent>.zip`, run `make hosts-unpack` (it
+   replaces `definitions/<agent>.yaml` and the host code, and keeps `.env`, `.venv` and `.local`), then restart the hosts.
+   Don't edit `agentmesh/hosts/*/definitions/*.yaml`
    to change behaviour. If an agent needs a change, write down what to change in the Builder and tell the user.
 4. **Don't fake AgentMesh.** No mock backend pretending to be live. The web app's `replay` and `mock` modes must
    show a visible banner.
 5. **Platform blockers: stop and report.** Report the exact error and the options. Don't hack around platform
-   auth. The one agreed fallback: on `no registered table 'role_skills'`, set `AGENT_NAME_PREFIX=wee77963` in the
+   auth. The one agreed fallback: on `no registered table 'role_skills'`, set `AGENT_NAME_PREFIX=w7d41b85` (the team workspace;
+   its tables exist only after one Builder Test run with `{"mode":"seed"}` there) in the
    orchestrator's `.env`, restart, retry; if that fails, stop and report.
 6. Synthetic data only (Northwind Insurance, Priya Sharma). Keep the user's work email out of commits; use a GitHub
    noreply address.
