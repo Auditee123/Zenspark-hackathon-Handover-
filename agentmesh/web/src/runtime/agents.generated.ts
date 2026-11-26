@@ -166,6 +166,11 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinitionSummary> = {
         "description": "KT giver pool"
       },
       {
+        "id": "apply_contacts",
+        "type": "custom_python",
+        "description": "Per-run contacts from the app (in memory only)"
+      },
+      {
         "id": "search_project",
         "type": "mcp_call",
         "description": "Search the project documents and expert answers for the gaps",
@@ -475,6 +480,10 @@ export const AGENT_DEFINITIONS: Record<string, AgentDefinitionSummary> = {
       },
       {
         "from": "load_givers",
+        "to": "apply_contacts"
+      },
+      {
+        "from": "apply_contacts",
         "to": "search_project"
       },
       {

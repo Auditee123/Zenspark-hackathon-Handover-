@@ -25,6 +25,9 @@ demo: ## Start the 3 hosts, wait for /health, then the web app (Ctrl-C stops the
 	@$(MAKE) -s health
 	@$(MAKE) -s web
 
+smoke: ## Live smoke test of the 3 agents (stops before H3; test addresses only; about 3 minutes)
+	python3.12 -I scripts/smoke_live.py
+
 forget-runs: ## Stop the orchestrator and delete its LOCAL run history (e.g. after a run used real addresses)
 	-@pkill -f 'handover_orchestrator.app' && echo "orchestrator stopped" || true
 	rm -rf agentmesh/hosts/handover-orchestrator/.local/invocations.json agentmesh/hosts/handover-orchestrator/.local/checkpoints

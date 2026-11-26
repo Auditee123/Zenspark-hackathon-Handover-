@@ -365,7 +365,10 @@ approval key, because it runs after H3).
 
 ---
 
-## ☐ 5. `handover-orchestrator`: no real addresses stored in AgentMesh; addresses come from the app per run
+## ☑ 5. `handover-orchestrator`: no real addresses stored in AgentMesh; addresses come from the app per run
+
+**Done in the Builder on 26 Nov (15:20 UTC), export `handover-orchestrator_v5.zip`. Verified locally** (PHASE1.md, v5
+re-test). The `sneha` row stayed Auditee, with `auditee@zensar.example`.
 
 **Apply this before prompt 4.** The full prompt was handed over in chat on 26 Nov. What it does:
 
@@ -379,3 +382,14 @@ approval key, because it runs after H3).
    `"contacts": {"sneha": "<own address>"}` up to `review_plan`, and a re-export.
 
 The web app already sends `contacts` from **Onboard joiners → KT giver contacts for this run**, only when filled.
+
+---
+
+## ☐ 6. `handover-qa`: make the privacy-wall refusal a first-check rule
+
+The full prompt was handed over in chat on 26 Nov.
+- **Why:** "What did the panel say about Priya?" was answered from KT session notes instead of being refused. The
+  refusal rule is the last rule in `qa_answer`, and it's phrased narrowly.
+- **Fix:** make it the first check, covering panels, interviewers, L1/L2/L3, hiring and assessment results about any
+  named person, and applying even when the search results mention that person.
+- **Then:** re-run the Golden Set (3 samples) and a few paraphrases of the question.

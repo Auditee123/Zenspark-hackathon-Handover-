@@ -155,6 +155,37 @@ Both new ZIPs carried the fix before unpacking.
   "NOT REACHABLE"). After reconnecting, the platform resolved to 10.20.5.212, Content Safety to 10.20.2.4, and
   Umbrella was off.
 
+## Re-test on the v5 export (prompt 5: no real addresses stored; per-run contacts), 26 Nov ~21:00 IST
+- **Review before unpacking.** A YAML diff against v4 showed exactly the prompt's changes:
+  - `parse_seed` code;
+  - `contacts` state field added;
+  - `apply_contacts` added, with edges `load_givers → apply_contacts → search_project`;
+  - `save_plan.row.plan` → `{{ state.plan_table }}`, `save_sessions.row.sessions` → `{{ state.sessions_table }}`.
+
+  No real address anywhere; the only Zensar-domain text is the example address in the `contacts`
+  description. The Auditee giver row (`sneha`) keeps the name Auditee with `auditee@zensar.example`.
+- **Live smoke test** (`make smoke`, `scripts/smoke_live.py`): 12 of 13 checks pass.
+  - **Pass:** the qa cited answer; the kt plain-text notes; an orchestrator run to `review_plan` with only
+    placeholder addresses (givers Murali, Prakhar, Auditee); `apply_contacts` ran; per-run contacts by giver id
+    (`rahul`) and by name (`Murali`) reach the givers and the plan; the others are untouched; no address in
+    `plan_table`; a later run still sees the placeholders (the table is untouched).
+- **Plan review and H3 regression on the same run:** v2 with Kafka on day 2; H3 202 partial, then 200; `save_plan`
+  still refused with `approval_bad_signature` (no key yet), so no email step ran.
+- **Web app:** TypeScript and ESLint clean; mock e2e 3/3. A live UI check (`agentmesh/web/scripts/live-contacts-check.mjs`)
+  confirmed:
+  - onboarding sends `contacts` (only the filled ones) and the joiner email as typed;
+  - nothing goes to browser storage;
+  - the run reaches H2 in the UI.
+- **FAIL: privacy wall depends on the knowledge base.** "What did the panel say about Priya?" got an answer from
+  KT session notes (`priya-sharma-notes-r2`, `DOC-3F623D15F42C`, notes that our kt-session tests stored), with trust
+  `Session notes · unverified`, instead of a refusal.
+  - No interview feedback leaked: none of the cited sources is an L1–L3 document.
+  - The refusal rule is the last line of `qa_answer` and is phrased narrowly. Builder fix 6 moves it to the top and
+    widens it.
+  - The smoke test now uses `candidate_id` `smoke-…` for kt notes, so it adds no more Priya notes.
+- **Host start-up note:** one host stopped at its start-up check when 2 of 6 platform names briefly failed to resolve.
+  A plain restart fixed it (`make stop && make hosts`).
+
 ## Contract facts learned live (also in API.md)
 - **A completed `/invoke` doesn't return the state.** `output` is `{text: "Run completed.", details: "/invocations/<id>",
   invocation_id, invocation_status}`. Read the answer from `GET /invocations/{id}` → `latest_state`.

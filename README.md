@@ -57,6 +57,7 @@ Without VPN or hosts, for UI work: `make mock` → http://localhost:5181 (labell
 | Hosts | `make health` | Three lines with `"status":"healthy"`. 8001 reports `w7d41b85-handover-orchestrator` |
 | Agents really answer | Open the UI → Ask Handover → "Who approves a production release?" | Fatima Khan, trust "Project documents" (about 20 s) |
 | UI connected | http://localhost:5180 | No red banner at the top; the Command centre lists the runs |
+| Agents end to end (safe: stops before H3, test addresses only) | `make smoke` | All PASS (about 3 minutes) |
 | Code | `make check` and `cd agentmesh/web && npm run e2e` | Clean, and "3 passed" |
 
 **4. Stop.** `Ctrl-C` stops the UI; `make stop` stops the three hosts.
@@ -328,7 +329,9 @@ contract in [agentmesh/API.md](agentmesh/API.md).
   - **prompt 5 first:** remove the real address from the seed data and re-seed; per-run `contacts`; no addresses
     in the saved rows;
   - **then prompt 4:** emailed invites and the reschedule loop.
-  - Prompt 3 (team names) is done (v4 export).
+  - Prompt 3 (team names, v4) and prompt 5 (no stored addresses, per-run contacts, v5) are done and verified.
+  - **Prompt 6 (`handover-qa`):** make the privacy-wall refusal a first-check rule. A smoke run showed it can
+    answer "What did the panel say about Priya?" from KT session notes.
 
 - **Publish isn't available in the Builder yet.** The team lead is checking with the organisers. The host ZIPs
   (26 Nov, 11:03-11:05 IST) match the latest agent YAML.
