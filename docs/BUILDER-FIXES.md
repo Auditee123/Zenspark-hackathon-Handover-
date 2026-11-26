@@ -385,7 +385,10 @@ The web app already sends `contacts` from **Onboard joiners → KT giver contact
 
 ---
 
-## ☐ 6. `handover-qa`: make the privacy-wall refusal a first-check rule
+## ☑ 6. `handover-qa`: make the privacy-wall refusal a first-check rule
+
+**Done on 26 Nov (15:38 UTC), export `handover-qa_v5.zip`; Golden Set 3/3 in the Builder.** Locally, 8 of 9 questions pass,
+but the same panel question was refused in one run and not in the next. Hence fix 7.
 
 The full prompt was handed over in chat on 26 Nov.
 - **Why:** "What did the panel say about Priya?" was answered from KT session notes instead of being refused. The
@@ -393,3 +396,17 @@ The full prompt was handed over in chat on 26 Nov.
 - **Fix:** make it the first check, covering panels, interviewers, L1/L2/L3, hiring and assessment results about any
   named person, and applying even when the search results mention that person.
 - **Then:** re-run the Golden Set (3 samples) and a few paraphrases of the question.
+
+---
+
+## ☐ 7. `handover-qa`: deterministic privacy guard (a code step before the search)
+
+The full prompt was handed over in chat on 26 Nov.
+- **What:** add a Custom code step `privacy_guard` first (START → `privacy_guard`).
+  - When the question is about a person's interview, panel, hiring, ratings, scores or feedback, it sets
+    `answer` = "That information is not available in this chat.", `trust` = "Blocked", `citations` = [] and
+    `blocked` = true.
+  - It then goes straight to `reply`; otherwise it goes to `search` as before.
+  - The prompt rule from fix 6 stays as a second layer.
+- **Why:** the model-only rule is not deterministic. The same question was Blocked in one run and "No answer" in the
+  next.

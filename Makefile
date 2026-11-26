@@ -20,8 +20,6 @@ mock: ## Web app on labelled mock data, no hosts needed: http://localhost:5181
 
 demo: ## Start the 3 hosts, wait for /health, then the web app (Ctrl-C stops the web app; make stop stops the hosts)
 	@$(MAKE) -s hosts
-	@echo "waiting for the hosts..."
-	@for i in $$(seq 1 120); do n=0; for p in 8001 8002 8003; do curl -s -m 2 -o /dev/null localhost:$$p/health && n=$$((n+1)); done; [ $$n -eq 3 ] && break; sleep 3; done
 	@$(MAKE) -s health
 	@$(MAKE) -s web
 
@@ -42,13 +40,8 @@ doctor: ## Check tools, inputs, .env values (never printed), VPN and running hos
 hosts-unpack: ## Recreate agentmesh/hosts/* from inputs/zips (keeps .env, .venv, .local)
 	scripts/unpack-hosts.sh
 
-hosts: ## Start the three agent hosts in the background (logs in logs/)
-	@mkdir -p logs
-	@for h in $(HOSTS); do \
-	  echo "starting $$h (log: logs/$$h.log)"; \
-	  (cd agentmesh/hosts/$$h && nohup ./startup.sh > ../../../logs/$$h.log 2>&1 &) ; \
-	done
-	@echo "first start installs packages (several minutes); then: make health"
+hosts: ## Start the three agent hosts one by one, retrying a host that stops at start-up (logs in logs/)
+	@scripts/start-hosts.sh
 
 stop: ## Stop the three agent hosts
 	-@pkill -f 'handover_orchestrator.app|handover_qa.app|handover_kt_session.app' && echo "stopped" || echo "no hosts running"

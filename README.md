@@ -41,7 +41,7 @@ make demo     # starts the 3 agent hosts, waits until all are healthy, then the 
 Or step by step:
 
 ```bash
-make hosts    # start the 3 agent hosts in the background (first start installs packages: several minutes)
+make hosts    # start the 3 agent hosts one by one, retrying a host that stops at start-up (first start installs packages)
 make health   # wait until 8001, 8002 and 8003 all say "healthy"
 make web      # UI on live AgentMesh: http://localhost:5180
 make logs     # (optional) follow the host logs
@@ -330,8 +330,8 @@ contract in [agentmesh/API.md](agentmesh/API.md).
     in the saved rows;
   - **then prompt 4:** emailed invites and the reschedule loop.
   - Prompt 3 (team names, v4) and prompt 5 (no stored addresses, per-run contacts, v5) are done and verified.
-  - **Prompt 6 (`handover-qa`):** make the privacy-wall refusal a first-check rule. A smoke run showed it can
-    answer "What did the panel say about Priya?" from KT session notes.
+  - Prompt 6 (`handover-qa` privacy rule first, v5) is done, but the refusal still varies between runs.
+  - **Prompt 7 (`handover-qa`):** a deterministic privacy guard in code before the search.
 
 - **Publish isn't available in the Builder yet.** The team lead is checking with the organisers. The host ZIPs
   (26 Nov, 11:03-11:05 IST) match the latest agent YAML.
