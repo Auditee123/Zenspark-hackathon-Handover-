@@ -132,7 +132,7 @@ Prompts for the browser Claude are in [docs/BUILDER-FIXES.md](../docs/BUILDER-FI
 - #2 `handover-orchestrator`: `search_project` searches the default `knowledge` collection (404); point it at `handover-project`.
 
 ## Harmless warnings in the host logs
-- The tracing collector `ca-phoenix.internal` isn't resolvable from a laptop. Spans are dropped.
+- The in-cluster tracing collector isn't resolvable from a laptop. Spans are dropped.
 - "governance violation record failed … PostgreSQL at localhost:5432 rejected SSL upgrade". The SDK tries a default
   local Postgres; something else on this Mac listens on 5432.
 

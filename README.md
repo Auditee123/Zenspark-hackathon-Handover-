@@ -164,6 +164,29 @@ curl -s -X POST localhost:8002/invoke/handover-qa -H 'Content-Type: application/
 # expect: Fatima Khan …, trust "Project documents"
 ```
 
+## 3. The web app (`agentmesh/web`)
+
+Built from the AgentMesh Serve scaffold (Vite, React, TypeScript, Tailwind). It follows `Handover_Prototype.html`:
+light theme by default with a dark toggle, a stage rail, "View as" Lead / Joiner / KT giver, an agent-trace pane, and
+an AgentMesh lens. It talks only to the three local hosts, through one Vite proxy per host.
+
+```bash
+make setup        # once: hook + npm install
+make web          # live, against the running hosts: http://localhost:5180
+make mock         # labelled MOCK data, no hosts or VPN needed: http://localhost:5181
+make demo         # start the 3 hosts, wait for /health, then the web app
+make check        # TypeScript strict + ESLint
+cd agentmesh/web && npm run e2e   # Playwright: full journey in mock mode
+```
+
+- **Ports:** 5180 (live) and 5181 (mock). 5173 is avoided because the older `handover-frontend` uses it.
+- **What runs live today:** everything up to H3 (see Status), plus Ask (handover-qa) and the session room
+  (handover-kt-session).
+- **Mock mode** runs the same routes with TypeScript ports of the orchestrator's code steps. It always shows a
+  MOCK DATA banner.
+- **After a Builder re-export:** run `npm run gen:nodes` in `agentmesh/web` to refresh the node list used by the
+  trace and the lens.
+
 ### Troubleshooting
 
 | Symptom | Fix |
@@ -221,8 +244,17 @@ contract in [agentmesh/API.md](agentmesh/API.md).
   agentmesh/PHASE1.md section 3
 - [ ] Full Priya run recorded as fixtures (recorded live up to H3; the rest waits for the key)
 
-**Phase 2: the React front end. In progress** in `agentmesh/web/`, built from the AgentMesh Serve scaffold.
-Milestones M1-M5 are in docs/PLAN.md.
+**Phase 2: the React front end. In progress** in `agentmesh/web/` (milestones in docs/PLAN.md).
+
+- [x] M1 shell: design tokens light/dark, rail, top bar, View as, trace pane, lens, runtime client, proxies, strict TS + ESLint
+- [x] M2-M4 screens:
+  - command centre, onboarding (form + CSV bulk import), gap analysis (H2) and cohort heatmap;
+  - KT plan review with diff and H3 two-approver card, scheduler with calendar and .ics;
+  - session room (live kt agent) and H1, assessment player, readiness and certificate;
+  - Ask (live qa), Agent runs, generic pause form.
+- [x] Playwright journey test (mock mode): 3/3 pass
+- [ ] Live journey past H3, once the approval key arrives
+- [ ] M5: record a full live run, replay mode, `make demo` rehearsal
 
 **Open issues and decisions**
 

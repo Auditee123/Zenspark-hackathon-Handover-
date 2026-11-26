@@ -76,20 +76,20 @@ ESLint. Keep `PROTOCOL.md`, `route-config.json`, `auth.tsx` (MSAL, dev bypass) a
 | — | Command centre: joiners pipeline (`/invocations`), needs-my-action (`/approvals/pending`), agent activity |
 
 ### Milestones
-- [ ] **M1, Fri 27 am. Shell.**
+- [x] **M1, Fri 27 am. Shell.** (done 26 Nov)
   - Scaffold moved to `agentmesh/web`.
   - Design tokens in light and dark; rail, top bar with joiner selector and "View as" (Lead / Joiner / KT giver).
   - Trace pane and lens.
   - Runtime client with mock mode, proxies, strict TS and ESLint.
   - *Check:* `make mock` renders in both themes at 1280 px; typecheck and lint are clean.
-- [ ] **M2, Fri 27 pm. Live basics.**
+- [x] **M2, Fri 27 pm. Live basics.** (done 26 Nov; Ask and the session room run live)
   - Ask (handover-qa live), command centre (live), Agent runs, generic pause form, live trace.
   - *Check:* the three runbook questions work in the UI; real pauses appear in "Needs your action".
-- [ ] **M3, Sat 28. First half of the journey.**
+- [x] **M3, Sat 28. First half of the journey.** (built 26 Nov; live through H3, then blocked on the approval key)
   - Start a joiner (Priya sample), Gap analysis (H2) and cohort heatmap, Review with diff, H3, Scheduler with
     calendar and .ics.
   - *Check:* Priya runs live through `confirm_slots`.
-- [ ] **M4, Sun 29. Second half.**
+- [ ] **M4, Sun 29. Second half.** (screens built and passing in mock mode; live waits for the approval key)
   - Session room (kt agent), H1, assessment player, readiness and certificate, the round-2 loop.
   - *Check:* a full live Priya run, end to end.
 - [ ] **M5, Mon 30. Demo safety and freeze.**

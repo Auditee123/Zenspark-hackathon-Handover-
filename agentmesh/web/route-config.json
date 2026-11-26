@@ -1,0 +1,14 @@
+{
+  "agent_name": "handover-orchestrator",
+  "route": "/api/v1/agents/invoke/handover-orchestrator",
+  "streaming": true,
+  "auth": "entra_id_jwt",
+  "cors_origins": [
+    "<agentmesh-platform-origin>"
+  ],
+  "rate_limit": {
+    "requests_per_minute": 60,
+    "burst": 10
+  },
+  "timeout_seconds": 300
+}

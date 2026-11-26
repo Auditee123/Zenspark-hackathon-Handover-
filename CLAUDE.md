@@ -46,7 +46,8 @@ demo on 1 Dec 2026. The freeze is 30 Nov 2026.
 - The orchestrator runs with `AGENT_NAME_PREFIX=w7d41b85` in its `.env` (team workspace tables). It then serves as
   `w7d41b85-handover-orchestrator`; `/invoke/handover-orchestrator` still works.
 - **Status (26 Nov):** Phase 1 works live (see agentmesh/PHASE1.md). Phase 2, the web app in `agentmesh/web`, is in
-  progress.
+  progress: all screens are built and run live up to H3; mock mode covers the rest. Web app on :5180 (live) and
+  :5181 (mock); `npm run e2e` runs the mock journey.
 - `POST /invoke/{agent}` is **synchronous**. It returns when the run pauses (`status: pending_hitl`, with
   `output.invocation_id`) or ends.
 - `/invocations*` and `/approvals*` come from the private SDK. Their exact schemas are recorded in

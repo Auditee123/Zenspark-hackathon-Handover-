@@ -11,7 +11,7 @@ SECRET_RE='(AZURE_CLIENT_SECRET|AZURE_DEVOPS_PAT|ACTION_APPROVAL_SIM_SECRET|ACTI
 # Browser-exposed variables must never hold keys.
 VITE_RE='VITE_[A-Z0-9_]*(KEY|SECRET|TOKEN|PAT|PASSWORD)[A-Z0-9_]*[[:space:]]*[:=][[:space:]]*["'"'"']?[^[:space:]"'"'"'#]'
 # Private platform endpoints and credentialed feed URLs.
-HOST_RE='azurecontainerapps\.io|jollystone-|cognitiveservices\.azure\.com|https://[^/@[:space:]]+:[^@[:space:]]+@pkgs\.dev\.azure\.com'
+HOST_RE='azurecontainerapps\.io|jollystone-|kindbeach-|corp\.internal|cognitiveservices\.azure\.com|https://[^/@[:space:]]+:[^@[:space:]]+@pkgs\.dev\.azure\.com'
 
 while IFS= read -r -d '' path; do
   base=$(basename "$path")
