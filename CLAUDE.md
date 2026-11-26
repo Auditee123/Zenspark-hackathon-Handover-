@@ -25,7 +25,11 @@ demo on 1 Dec 2026. The freeze is 30 Nov 2026.
    To pick up a change: Deploy → Download ZIP there, replace `inputs/zips/<agent>.zip`, run `make hosts-unpack` (it
    replaces `definitions/<agent>.yaml` and the host code, and keeps `.env`, `.venv` and `.local`), then restart the hosts.
    Don't edit `agentmesh/hosts/*/definitions/*.yaml`
-   to change behaviour. If an agent needs a change, write down what to change in the Builder and tell the user.
+   to change behaviour. **If an agent needs a change, write a self-contained prompt for the user's Claude-in-Chrome
+   session (it has the Builder open) and add it to `docs/BUILDER-FIXES.md`.** The prompt must say: "I'm running the
+   exported <agent> locally from VS Code…", what was seen (the exact error or log line, the input used), which node or
+   prompt to change and how, a Test input to verify with, and "then Deploy → Download ZIP again". Edit only in
+   `ZE_000046_Handover`.
 4. **Don't fake AgentMesh.** No mock backend pretending to be live. The web app's `replay` and `mock` modes must
    show a visible banner.
 5. **Platform blockers: stop and report.** Report the exact error and the options. Don't hack around platform
@@ -37,7 +41,12 @@ demo on 1 Dec 2026. The freeze is 30 Nov 2026.
 7. Commit or push only when the user asks. Work on branch `agentmesh-ui`.
 
 ## Useful facts
-- Hosts need the **Zenspark VPN**; `make doctor` checks it. Python 3.12 (3.14 is too new for the SDK).
+- Hosts need the **Zenspark VPN** with **Cisco Umbrella disabled**; Umbrella hijacks DNS, so Content Safety resolves
+  publicly and strict agents fail with `input_governance_blocked`. `make doctor` checks the VPN. Python 3.12.
+- The orchestrator runs with `AGENT_NAME_PREFIX=w7d41b85` in its `.env` (team workspace tables). It then serves as
+  `w7d41b85-handover-orchestrator`; `/invoke/handover-orchestrator` still works.
+- **Status (26 Nov):** Phase 1 works live (see agentmesh/PHASE1.md). Phase 2, the web app in `agentmesh/web`, is in
+  progress.
 - `POST /invoke/{agent}` is **synchronous**. It returns when the run pauses (`status: pending_hitl`, with
   `output.invocation_id`) or ends.
 - `/invocations*` and `/approvals*` come from the private SDK. Their exact schemas are recorded in

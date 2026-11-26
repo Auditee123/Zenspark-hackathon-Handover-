@@ -20,19 +20,19 @@ Freeze **Mon 30 Nov 2026**; jury demo **Tue 1 Dec 2026** on localhost.
         `input_schema`?) and `/invocations/stats`
   - [x] whether `POST /invoke/{agent}/stream` (SSE) exists, and its event names and payloads
   - [x] the SDK version. If a body is an untyped dict, read the installed SDK source to confirm it (read-only)
-- [ ] **BLOCKED: every /invoke fails with `input_governance_blocked` (Content Safety unreachable privately over the VPN; see agentmesh/PHASE1.md).** Waiting on organisers or mentor, or a Builder governance decision
-- [ ] Smoke-test `handover-qa` with curl, using the runbook questions:
+- [x] Governance block fixed (Cisco Umbrella disabled; Content Safety resolves privately)
+- [x] Smoke-test `handover-qa` with curl, using the runbook questions:
   - "Who approves a production release?" → Fatima Khan, trust Project documents
   - "Where do failed claim events go?" → claims-events.DLQ after three retries
   - "What did the panel say about Priya?" → refusal, trust **Blocked**
-- [ ] Smoke-test `handover-kt-session`: one turn, then one `end_session: true` turn (notes stored)
-- [ ] Smoke-test the orchestrator with the Priya input (kit Appendix E):
-  - [ ] `pending_hitl` at `h2_gap_approval`. Expected gaps: Spring 4.0 Met, Kafka 2.5 Not met, Claims 1.0 Not met
-  - [ ] approve H2 via `/approvals/{id}` → paused at `review_plan`
-  - [ ] submit `{move_skill_id:"kafka", to_day:2}` → plan v2, "Moved … to day 2"
-  - [ ] on `no registered table`: set `AGENT_NAME_PREFIX=w7d41b85` (team workspace; needs one seed Test run
+- [x] Smoke-test `handover-kt-session`: one turn, then one `end_session: true` turn (notes stored)
+- [x] Smoke-test the orchestrator with the Priya input (kit Appendix E):
+  - [x] `pending_hitl` at `h2_gap_approval`. Expected gaps: Spring 4.0 Met, Kafka 2.5 Not met, Claims 1.0 Not met
+  - [x] approve H2 via `/approvals/{id}` → paused at `review_plan`
+  - [x] submit `{move_skill_id:"kafka", to_day:2}` → plan v2, "Moved … to day 2"
+  - [x] on `no registered table`: set `AGENT_NAME_PREFIX=w7d41b85` (team workspace; needs one seed Test run
         `{"mode":"seed"}` there first), restart, retry. If it still fails, stop and report
-  - [ ] watch `integrity.write_refused`; `ACTION_APPROVAL_SIM_SECRET` may be needed from the mentor
+  - [x] watch `integrity.write_refused`; `ACTION_APPROVAL_SIM_SECRET` may be needed from the mentor
 - [x] `agentmesh/PHASE1.md`: what works, what is blocked, exact errors, decisions needed
 
 ## Phase 2: the front end (starts after Phase 1 reports and the team lead approves)

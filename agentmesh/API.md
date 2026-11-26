@@ -4,6 +4,8 @@
 saved in `agentmesh/api/`. Behaviour comes from the installed SDK source (`agentzoo/serving/definition_runtime.py`)
 and from live calls. Every host (`:8001` orchestrator, `:8002` qa, `:8003` kt-session) serves the same routes.
 
+**Confirmed live on 26 Nov 2026** against all three hosts (see PHASE1.md).
+
 Status markers:
 
 - ✅ confirmed live;
@@ -14,9 +16,9 @@ Status markers:
 | Question | Answer |
 |---|---|
 | Does `POST /invoke/{agent}/stream` (SSE) exist? | ✅ **No.** It isn't in any host's OpenAPI. The UI must **poll**. |
-| Body of `POST /approvals/{id}` for an Approval (`hitl_gate`) | 📄 `{gate, decision: "approved" \| "rejected", notes, reviewer}` |
-| Body of `POST /approvals/{id}` for Ask a person (`ask_user`) | 📄 `{gate, decision: "submitted", input: {…form fields…}}`, or `decision: "rejected"` to decline |
-| Is a decision synchronous? | 📄 **Yes.** It resumes the run "to its end (or next gate)" before returning |
+| Body of `POST /approvals/{id}` for an Approval (`hitl_gate`) | ✅ `{gate, decision: "approved" \| "rejected", notes, reviewer}` |
+| Body of `POST /approvals/{id}` for Ask a person (`ask_user`) | ✅ `{gate, decision: "submitted", input: {…form fields…}}`, or `decision: "rejected"` to decline |
+| Is a decision synchronous? | ✅ **Yes.** It resumes the run "to its end (or next gate)" before returning |
 | Two approvers (`min_approvals: 2`, H3) | 📄 The first approval returns **HTTP 202** `{status: "partial", approvals, required}`; the run waits for the next approver |
 
 ## Routes
@@ -24,7 +26,7 @@ Status markers:
 ### Run
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/invoke/{agent}` | ✅ Body `{input: {…}, config?: {…}}`. **Synchronous**: returns when the run pauses, ends or fails. Response `{agent_name, status: "success" \| "error" \| "pending_hitl", output, error, integrity, files_produced[]}`. When paused: `output.invocation_id`, and `output.invocation_status == "pending_hitl"` |
+| POST | `/invoke/{agent}` | ✅ Body `{input: {…}, config?: {…}}`. **When the run completes, `output` is only `{text: "Run completed.", details: "/invocations/<id>", invocation_id, invocation_status}`; read the result from `GET /invocations/{id}` → `latest_state`.** With `AGENT_NAME_PREFIX`, the host serves `<prefix>-<agent>`, but `/invoke/<agent>` still works; `/invocations?agent=` needs the prefixed name (from `/health` → `agents[0]`). **Synchronous**: returns when the run pauses, ends or fails. Response `{agent_name, status: "success" \| "error" \| "pending_hitl", output, error, integrity, files_produced[]}`. When paused: `output.invocation_id`, and `output.invocation_status == "pending_hitl"` |
 | POST | `/invoke/{agent}/versions/{version}` | Same, for a pinned definition version |
 | POST | `/intake/{agent}` | Multipart upload plus `input` JSON; same response plus `files` |
 | GET | `/files/{path}` | Download a file listed in `files_produced[].download`. Only files produced since the host started |
@@ -34,8 +36,8 @@ Status markers:
 |---|---|---|
 | GET | `/invocations` | ✅ `{invocations: [...], total, limit, offset}`. Query: `status` (comma list), `agent`, `limit` (50), `offset`, `requester`, `trigger_type`, `since`, `until`, `q` (search) |
 | GET | `/invocations/stats` | ✅ `{total, running, completed, pending_hitl, error, queued, interrupted, cancelled}` |
-| GET | `/invocations/{id}` | 📄 The stored run row as-is (404 if unknown). It includes `timeline` (with `hitl_waiting` entries) and the integrity summary. Exact keys to pin on the first real run |
-| GET | `/invocations/{id}/pending` | 📄 The pause the run waits at (404 if not paused); shape below |
+| GET | `/invocations/{id}` | ✅ `{invocation_id, agent, status, current_node, latest_node, completed_nodes[], latest_state, input, timeline[], created_at, updated_at, created_by, trace_id, trigger_type, business_unit, owner_id, lease_until, heartbeat_at, replay_of}`. `latest_state` holds the agent's state plus `_node_durations_ms`, `_llm_routing[node]{model, provider, tier, cost_usd, simulated}`, `_integrity` and the `_governance_*` fields. Timeline entry types: `invocation_requested`, `node_completion{node, timestamp}`, `hitl_waiting`, `hitl_decision` |
+| GET | `/invocations/{id}/pending` | ✅ The pause the run waits at (404 if not paused); shape below |
 | POST | `/invocations/{id}/cancel` | Cancel (needs an authorised actor) |
 | POST | `/invocations/{id}/resume` | Re-queue an `interrupted` / `failed_recoverable` run from its checkpoint. **Not** for approvals |
 
@@ -43,7 +45,7 @@ Status markers:
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/approvals/pending?agent=&limit=50` | ✅ `{pending: [PendingPause & {created_at}], total}` |
-| POST | `/approvals/{id}` | 📄 `DecisionBody`, below |
+| POST | `/approvals/{id}` | ✅ `DecisionBody`, below |
 
 **`DecisionBody`.** Only `decision` is required.
 
@@ -107,13 +109,6 @@ Status markers:
 - **The node trace** comes from the run row (`timeline`, and `_node_durations_ms` in the final state). To pin on
   the first real run.
 
-## Error seen on this laptop (see PHASE1.md)
-Every `/invoke` currently returns:
-
-```
-status: "error", error: "input_governance_blocked: content_safety:unavailable,prompt_shield:unavailable"
-```
-
-All three agents are `governance_level: strict`. Azure Content Safety refuses the calls with
-`403 Public access is disabled. Please configure private endpoint.`, and over the Zenspark VPN its hostname resolves
-to the public address, not a private endpoint.
+## Fixed blockers
+The governance block (Cisco Umbrella DNS) and the "no registered table" error (`AGENT_NAME_PREFIX=w7d41b85`)
+are both resolved; see PHASE1.md.

@@ -61,7 +61,9 @@ times out.
 1. Install **Azure VPN Client** from the Mac App Store.
 2. Import the **Zenspark** VPN profile shared by the hackathon organisers. VPN profiles are never committed here.
 3. Connect **Zenspark** and sign in with your Zensar Microsoft (Entra ID) account.
-4. Later, `make doctor` confirms the platform is reachable.
+4. **Disable Cisco Umbrella** on your Mac while you work. Otherwise it intercepts DNS, the private Azure Content
+   Safety endpoint resolves to its public address, and every agent run fails with `input_governance_blocked`.
+5. Later, `make doctor` confirms the platform is reachable.
 
 ### 1.3 Get the credentials and inputs (never in git)
 
@@ -171,7 +173,7 @@ curl -s -X POST localhost:8002/invoke/handover-qa -H 'Content-Type: application/
 | `No read access to the AgentMesh package feed` | The service principal or your account lacks feed access; ask the organisers |
 | `Need Python 3.11 or later`, or build errors on 3.14 | `brew install python@3.12`, delete the host's `.venv`, start again |
 | `/invoke` answers 401, or tools fail with `mcp_auth_failed` | `AUTH_MODE=dev` in that host's `.env` |
-| `/invoke` returns `input_governance_blocked: content_safety:unavailable,prompt_shield:unavailable` | Platform network issue, not your setup; see agentmesh/PHASE1.md |
+| `/invoke` returns `input_governance_blocked: content_safety:unavailable,prompt_shield:unavailable` | **Disable Cisco Umbrella** (it hijacks DNS, so Azure Content Safety resolves to its public address), keep the Zenspark VPN on, then `make stop && make hosts` |
 | Orchestrator: `no registered table 'role_skills'` | Known platform issue; see Status below (we retry with `AGENT_NAME_PREFIX=w7d41b85`, after a seed Test run in the team workspace) |
 
 ---
@@ -199,31 +201,24 @@ logs/                    gitignored: host logs
 
 Last updated **26 Nov 2026**. Details and the milestone checklist are in [docs/PLAN.md](docs/PLAN.md).
 
-**Phase 1: run the hosts locally. Hosts are up; agent runs are BLOCKED on a platform network issue.**
-Full report in [agentmesh/PHASE1.md](agentmesh/PHASE1.md); the contract is in [agentmesh/API.md](agentmesh/API.md).
+**Phase 1: run the hosts locally. DONE, works live.** Report in [agentmesh/PHASE1.md](agentmesh/PHASE1.md);
+contract in [agentmesh/API.md](agentmesh/API.md).
 
 - [x] Workspace, `.gitignore`, secret hook, unpack script, `make doctor`
-- [x] Service principal works: Entra sign-in, private package feed, content-safety scope
-- [x] Zenspark VPN reaches the AgentMesh platform services
-- [x] All three hosts install and run; `/health` healthy on 8001-8003 (agentzoo-sdk 1.58.16)
-- [x] `agentmesh/API.md`:
-  - no SSE route (the UI polls);
-  - `/approvals/{id}` body confirmed, with `submitted` + `input` for forms;
-  - decisions are synchronous;
-  - H3 returns 202 `partial` after the first approval.
-- [ ] **BLOCKED.** Every `/invoke` returns
-  `input_governance_blocked: content_safety:unavailable,prompt_shield:unavailable`.
-  - Azure Content Safety answers 403 "Public access is disabled", and the VPN doesn't resolve its private endpoint.
-  - The agents are `strict`, so they fail closed.
-  - Options: the organisers fix the VPN DNS, or provide another endpoint, or we lower governance in the Builder
-    (see PHASE1.md).
-- [ ] Smoke-test `handover-qa`: Fatima Khan / claims-events.DLQ / refusal with trust `Blocked` (blocked by the above)
-- [ ] Smoke-test `handover-kt-session`: one turn, then `end_session` (blocked)
-- [ ] Smoke-test the orchestrator with the Priya input: H2 → approve → `review_plan` → submit
-  `{move_skill_id:"kafka", to_day:2}` → v2 (blocked)
+- [x] Service principal: Entra sign-in, private package feed, content-safety scope
+- [x] All three hosts healthy on 8001-8003 (agentzoo-sdk 1.58.16)
+- [x] Governance block fixed: Cisco Umbrella disabled, so Content Safety resolves privately
+- [x] Orchestrator tables: `AGENT_NAME_PREFIX=w7d41b85` (team workspace)
+- [x] `handover-qa` live:
+  - Fatima Khan / claims-events.DLQ / refusal with trust `Blocked`;
+  - the retry-limit question answers from the expert answer (`Expert answer · verified`).
+- [x] `handover-kt-session` live: one turn, then `end_session` (notes stored)
+- [x] Orchestrator live with Priya: H2 (Kafka 2.5 and Claims 1.0 Not met) → approve → `review_plan` →
+  `{move_skill_id:"kafka", to_day:2}` → v2 with Kafka on day 2
+- [ ] Full Priya run recorded as fixtures (`scripts/record_run.py`), in progress
 
-**Phase 2: the React front end.** Not started; it begins only after Phase 1 reports. Milestones M1-M5 are in
-docs/PLAN.md.
+**Phase 2: the React front end. In progress** in `agentmesh/web/`, built from the AgentMesh Serve scaffold.
+Milestones M1-M5 are in docs/PLAN.md.
 
 **Open issues and decisions**
 

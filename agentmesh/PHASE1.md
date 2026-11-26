@@ -1,92 +1,92 @@
-# Phase 1 report: the AgentMesh hosts on localhost (26 Nov 2026)
+# Phase 1 report: the AgentMesh hosts on localhost
 
-## Summary
-The three exported hosts **install, start and are healthy** on 8001–8003, and the runtime contract is captured
-(`API.md`). **Every agent run is blocked by a platform network issue.** Azure Content Safety and Prompt Shield
-can't be reached privately from the Zenspark VPN, and all three agents are `strict`, so they refuse to run without
-them. That needs the organisers or the mentor.
+**Status, 26 Nov 2026, 13:40 IST: WORKING.** All three exported agents run live on this laptop:
+
+- they reach the AgentMesh platform over the Zenspark VPN;
+- strict governance passes;
+- integrity is `all_live` on every run (nothing simulated, no refused writes).
 
 ## What works
-| Item | Result |
+
+| Check | Result |
 |---|---|
-| Service principal (from `.env`) | Entra sign-in OK; Azure DevOps scope and Cognitive Services scope tokens issued |
-| Private package feed | `agentzoo-sdk` 1.58.16 and `agentzoo-agent-horizontal` installed with the service principal (no `az`, no PAT) |
-| Python | 3.12.16 (Homebrew); 3.14 avoided |
-| VPN to the platform services | All 6 MCP services resolve to a private address and answer `/health` 200 |
-| Hosts | `handover-orchestrator` :8001, `handover-qa` :8002, `handover-kt-session` :8003: `/health` = healthy |
-| Contract | `/openapi.json` saved for all three; schemas and behaviour in `API.md` |
-| Open questions settled | No SSE route (poll instead). `/approvals/{id}` body confirmed, including `submitted` + `input` for forms. Decisions are synchronous. H3's 2 approvals return 202 `partial` after the first |
+| Hosts | `handover-orchestrator` :8001, `handover-qa` :8002, `handover-kt-session` :8003: `/health` healthy (agentzoo-sdk 1.58.16, Python 3.12) |
+| Content Safety / Prompt Shield | Reached privately (resolves to `10.20.2.4`) after Cisco Umbrella was disabled |
+| `handover-qa` Q1 "Who approves a production release?" | "Production releases are approved by Fatima Khan, the Northwind release manager…". Trust `Project documents`; citations Release Runbook, Owner Directory; grounding `supported`, faithfulness 1.0 |
+| `handover-qa` Q2 "Where do failed claim events go?" | "…retried three times with backoff… moved to `claims-events.DLQ`". Trust `Project documents`; grounding `supported` |
+| `handover-qa` Q3 "What did the panel say about Priya?" | "I can't provide a person's interview feedback, panel comments, ratings, or assessment results in this chat." Trust **`Blocked`** |
+| `handover-qa` Q4 "Why is the claims-events retry limit three and not five?" | Answered from the H1 expert answer (30-second consumer timeout; five caused duplicates). Trust **`Expert answer · verified`** |
+| `handover-kt-session` turn 1 "Why is the retry limit three?" | Answered from the expert answer; citations include `priya-sharma-answers-r1`; no open question |
+| `handover-kt-session` turn 2 `end_session: true` | `write_notes` → `store_notes` (`indexed` in `handover-session-notes`) → `notify_orchestrator` |
+| Orchestrator, Priya input | `pending_hitl` at `h2_gap_approval` after 49 s. Gaps: Spring 4.0 Met, **Kafka 2.5 Not met**, **Claims 1.0 Not met**, PostgreSQL 3.0 Met, CI/CD 2.0 Partial, Observability 2.0 Partial, Ways 3.0 Met. 4 gaps, 2 critical |
+| `POST /approvals/{id}` H2 approve | HTTP 200 (`auth: anonymous_dev`); synchronous resume about 44 s → paused at `review_plan` (`kind: input`). Plan v1: 6 sessions, 5.5 h, Kafka on day 4 |
+| `POST /approvals/{id}` review_plan form `{move_skill_id: kafka, to_day: 2}` | HTTP 200 in under 1 s → **plan v2, Kafka on day 2**, `change_summary` = `Moved "Kafka on claims-events: retries and idempotent consumers" to day 2`. No AI step ran |
+| Full run recorded | `scripts/record_run.py` → `agentmesh/web/fixtures/priya-full-run.json` |
 
-## What is blocked
-Every `POST /invoke` on all three hosts fails in 2–4 s, before any node runs:
+## What was blocked, and how it was fixed
+
+### 1. Strict governance blocked every run: fixed by disabling Cisco Umbrella
+Every `/invoke` returned `input_governance_blocked: content_safety:unavailable,prompt_shield:unavailable`. The
+host log showed:
 
 ```
-status: error
-error: input_governance_blocked: content_safety:unavailable,prompt_shield:unavailable
-```
-
-The host log shows:
-
-```
-Azure Content Safety call failed (skipped-auth-failed) …
+WARNING agentzoo.governance.stages.content_safety Azure Content Safety call failed (skipped-auth-failed); content safety check not applied
 azure.core.exceptions.HttpResponseError: (403) Public access is disabled. Please configure private endpoint.
-Azure Prompt Shield call failed … 403 Forbidden
-Prompt Shield unavailable; failing closed for strict agent
-Input governance blocked invoke for agent 'handover-qa': ['content_safety:unavailable', 'prompt_shield:unavailable']
+WARNING agentzoo.governance.stages.prompt_shield Azure Prompt Shield call failed (skipped-auth-failed); falling back to regex-only detection
+httpx.HTTPStatusError: Client error '403 Forbidden' for url '<content-safety-endpoint>/contentsafety/text:shieldPrompt…'
+WARNING agentzoo.governance.stages.prompt_shield Prompt Shield unavailable; failing closed for strict agent
+WARNING agentzoo.agent.base Input governance blocked invoke for agent 'handover-qa': ['content_safety:unavailable', 'prompt_shield:unavailable']
 ```
 
-**Diagnosis:**
+- **Cause:** Cisco Umbrella intercepted DNS before the VPN. The Content Safety hostname and its `privatelink` name
+  resolved to the public address `20.62.58.5`, where public access is disabled.
+- **Fix** (per the AgentMesh team): disable Umbrella. Now both names resolve to the private `10.20.2.4`. A keyless
+  probe returns 401 (reachable) instead of 403.
+- **For teammates:** Umbrella must be off, and the Zenspark VPN on, before `make hosts`.
 
-- **Not a credentials problem.** The service principal gets a Cognitive Services token. The 403 comes from the
-  resource's network rule ("public access disabled").
-- **The VPN doesn't reach the resource privately.** The Content Safety resource (`AZURE_CONTENT_SAFETY_ENDPOINT` in
-  `.env`) only accepts calls through a private endpoint. Over the Zenspark VPN, even the VPN's own DNS server
-  (`10.0.0.4`) resolves its hostname, and its `privatelink` name, to the **public** address. The platform services
-  resolve to private addresses and work.
-- **Hence the difference from the Builder.** The Builder's backend runs inside the network where the private
-  endpoint exists. A laptop on the VPN doesn't get that private DNS entry.
-- **All three agents fail closed.** They are `governance_level: strict`, and the SDK blocks strict agents when
-  Prompt Shield is unavailable. The SDK reads no other setting here; the only related variable is the endpoint.
+### 2. Orchestrator tables not registered under the plain agent name: fixed with `AGENT_NAME_PREFIX`
+Run `8fa93a34-6fc8-49ef-abc2-173610e62047` ran 8 live steps, then failed:
 
-Not yet tested, because of the block:
+```
+ERROR agentzoo.mcp.client MCP data_gateway.db_query returned error: Error executing tool db_query: Agent 'handover-orchestrator' has no registered table 'role_skills'. Declare it in the agent's schema and deploy/register first.
+ERROR agentzoo.serving.definition_runtime Run 8fa93a34-6fc8-49ef-abc2-173610e62047 of handover-orchestrator failed
+agentzoo.mcp.client.MCPToolError: MCP server data_gateway returned error for tool 'db_query': … has no registered table 'role_skills' …
+```
 
-- the qa answers;
-- the kt turns;
-- the orchestrator path (H2, then an approval, then the `review_plan` form);
-- the "no registered table" fallback (`AGENT_NAME_PREFIX=w7d41b85`, the team workspace, after a seed Test run there);
-- `write_refused`.
+- **Fix:** `AGENT_NAME_PREFIX=w7d41b85` in the orchestrator's `.env`, the team workspace `ZE_000046_Handover`.
+  The host now serves as `w7d41b85-handover-orchestrator`, whose tables exist because Builder Test runs created
+  them, and the run paused at H2.
+  - The `wee77963` (My workspace) fallback was not needed.
+  - `/invoke/handover-orchestrator` still works.
+- **Consequence:** local runs read and write the team workspace's Test tables (gap scores, plans, sessions,
+  assessments), and share its budgets and approvals.
+- **Question for the AgentMesh team:** how should a locally run export register its own tables without a deploy?
 
-## Options (needs a decision)
-1. **Organisers fix the network (recommended; no change to our agents).** Ask them to make the Content Safety
-   resource's private endpoint resolvable over the Zenspark VPN. That means linking the
-   Cognitive Services `privatelink` private DNS zone to the VNet or DNS forwarder behind VPN DNS
-   `10.0.0.4`, and allowing the route. Or they can allow the VPN's address range on the resource's network rules.
-2. **Mentor provides a different `AZURE_CONTENT_SAFETY_ENDPOINT`** that is reachable from the VPN, with the
-   *Cognitive Services User* role for our service principal. We only change `.env`.
-3. **Lower governance in the Builder** from `strict` to `standard` on the three agents, then re-export.
-   - Runs would then continue with Content Safety *not applied* and Prompt Shield *regex-only*. The SDK flags this
-     visibly as "fail open".
-   - This weakens the governance story for the jury, and changes the agents. It's your call, made in the Builder.
+## Contract facts learned live (also in API.md)
+- **A completed `/invoke` doesn't return the state.** `output` is `{text: "Run completed.", details: "/invocations/<id>",
+  invocation_id, invocation_status}`. Read the answer from `GET /invocations/{id}` → `latest_state`.
+- **Run record keys:** `invocation_id, agent, status, current_node, latest_node, completed_nodes[], latest_state, input,
+  timeline[], created_at, updated_at, created_by ("unverified:dev-bypass"), trace_id, trigger_type, business_unit,
+  owner_id, lease_until, heartbeat_at, replay_of`.
+- **Timeline entries:** `invocation_requested`, `node_completion {node, timestamp}`, `hitl_waiting`, `hitl_decision`.
+  They carry no durations or models.
+- **Per-step timings and models** are in `latest_state._node_durations_ms` and `latest_state._llm_routing[node] =
+  {model, provider, tier, policy, cost_usd, simulated}`. Example: `extract_evidence` ran on gpt-5.4 for $0.00957;
+  `explain_gaps` on DeepSeek-V4-Flash.
+- **Pending pause:** `{gate, node, kind, summary, agent, invocation_id, policy{approvers, min_approvals,
+  forbid_requester, timeout_hours…}, progress{approvals, required, approvers[], approver_ids[]}, waiting_since, due_at,
+  requested_by, trace_id, …}`. ask_user pauses add `input_schema`.
+- **Decision response:** `{status: "ok", decision, reviewer, auth: "anonymous_dev", approvals, required,
+  invocation_status, pending: <next pause>, waiting, error}`.
 
-Not done, by design: editing `/etc/hosts`, patching the SDK, or editing the YAML locally.
+## Builder follow-ups
+Prompts for the browser Claude are in [docs/BUILDER-FIXES.md](../docs/BUILDER-FIXES.md):
 
-## Questions for the mentor (copy-paste)
-> Our exported agent hosts run on a laptop over the Zenspark VPN. They reach all six MCP services, but Azure Content
-> Safety and Prompt Shield return `403 Public access is disabled. Please configure private endpoint.` Over the VPN,
-> the content safety hostname (and its privatelink name) resolves to the public address, even via the VPN DNS
-> 10.0.0.4, so our strict agents fail closed with `input_governance_blocked: content_safety:unavailable,
-> prompt_shield:unavailable`.
->
-> 1. Can the Cognitive Services `privatelink` private DNS zone be made resolvable on the VPN, or the VPN
->    range allowed on the resource?
-> 2. Failing that, is there a content-safety endpoint we should use for local hosts?
-> 3. Or should locally run agents use governance `standard` instead of `strict`?
+- `handover-kt-session`: `write_notes` wraps the notes in a json code fence.
 
-## Housekeeping
-- **Smoke-test transcripts** are in `agentmesh/smoke/` (gitignored). The Priya input was extracted from kit
-  Appendix E.
-- **Harmless warnings in the host logs:**
-  - the tracing collector `ca-phoenix.internal` is unreachable from the laptop;
-  - "governance violation record failed: PostgreSQL at localhost:5432 rejected SSL upgrade". The SDK tries to
-    record violations in a default local Postgres; something else on this Mac listens on 5432.
-- The `/invocations` store has no runs yet. Governance blocks happen before a run is recorded.
+## Harmless warnings in the host logs
+- The tracing collector `ca-phoenix.internal` isn't resolvable from a laptop. Spans are dropped.
+- "governance violation record failed … PostgreSQL at localhost:5432 rejected SSL upgrade". The SDK tries a default
+  local Postgres; something else on this Mac listens on 5432.
+
+Raw transcripts (gitignored) are in `agentmesh/smoke/`.
